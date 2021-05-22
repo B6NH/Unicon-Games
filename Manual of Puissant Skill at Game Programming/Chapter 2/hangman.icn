@@ -1,0 +1,38 @@
+
+# Hangman
+
+procedure main()
+
+  local word, blanks, misses, letter
+
+  word := ?["beagle","tiger"]
+  blanks := repl("-",*word)
+  misses := 0
+
+  image := [
+    "  o ",
+    "\\ | /",
+    " \\|/ ",
+    " / \\ ",
+    "/   \\"
+  ]
+
+  repeat {
+    every write(image[1 to misses])
+    if misses = 5 then stop("You lose! ",getStr(word))
+    write(blanks)
+    letter := read()
+    if find(letter,word) then
+      every i := find(letter,word) do
+        blanks[i] := word[i]
+    else
+      misses +:= 1
+    if not find("-",blanks) then
+      stop("You win! ",getStr(word))
+  }
+
+end
+
+procedure getStr(word)
+  return "The word was " || word || "."
+end

@@ -1,0 +1,22 @@
+
+# Preliminaries
+
+procedure main()
+
+  local answer
+
+  write("What is nine plus eight?")
+  answer := read()
+  write("You say it is ", answer," and I say it is ", 9 + 8)
+
+  write("die roll: ", ?6)
+  write("coin toss: ", ?["heads","tails"])
+
+  if ?6 + ?6 = 2 then
+    write("snake eyes")
+  else
+    write("no dice")
+
+  every 1 to 3 do write("crazy")
+
+end

@@ -1,0 +1,49 @@
+
+# Hangman with graphics
+
+procedure main()
+
+  local word, blanks, misses, letter
+
+  w := open("hangman","g","size=400,400")
+
+  word := ?["beagle","tiger"]
+  blanks := repl("-",*word)
+  misses := 0
+
+  repeat {
+
+    if misses = 1 then DrawCircle(w,300,50,25)
+    if misses = 2 then DrawLine(w,300,75,300,150)
+    if misses = 3 then DrawLine(w,300,75,250,125)
+    if misses = 4 then DrawLine(w,300,75,350,125)
+    if misses = 5 then {
+      DrawLine(w,300,150,250,200)
+      DrawLine(w,300,150,350,200)
+    }
+
+    if misses = 5 then {
+      write("You lose! ",getStr(word))
+      delay(5000)
+      stop()
+    }
+
+    write(blanks)
+    letter := read()
+
+    if find(letter,word) then
+      every i := find(letter,word) do
+        blanks[i] := word[i]
+    else
+      misses +:= 1
+
+    if not find("-",blanks) then
+      stop("You win! ",getStr(word))
+
+  }
+
+end
+
+procedure getStr(word)
+  return "The word was " || word || "."
+end

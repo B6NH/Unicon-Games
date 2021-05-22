@@ -1,0 +1,23 @@
+
+# Scrambler
+
+procedure main()
+
+  local words, word, scramble, answer
+
+  words := ["fish","beagle","minotaur","tiger","baseball"]
+  word := ?words
+  scramble := word
+
+  every 1 to 99 do
+    scramble[?*scramble] :=: scramble[?*scramble]
+
+  write("Unscramble: ", scramble)
+  answer := read()
+
+  if answer == word then
+    write("Correct!")
+  else
+    write("No, it was ", word, ".")
+
+end
