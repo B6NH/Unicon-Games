@@ -1,0 +1,135 @@
+
+# Thespian's Little Helper
+
+procedure main(arg)
+
+  # Initial message
+  write("Welcome to the Thespian's Little Helper.")
+
+  # Help
+  if *arg = 1 & arg[1] == "-help" then
+    stop("usage: thespian play act scene role\n",
+      "Play abbreviations:\n",
+      " BO - The Beggar's Opera\n")
+
+  # Correct number of command line arguments
+  if *arg ~= 4 then
+    stop("usage: thespian play act scene role")
+
+  # Get act scene and role
+  act := arg[2]
+  scene := arg[3]
+
+  # Convert role to uppercase
+  role := map(arg[4],&lcase,&ucase)
+
+  # Select lines for scene
+  L := selectscene(readin(arg[1]),act,scene)
+
+  i := 1
+  while i <= *L do {
+
+    # Get line
+    s := L[i]
+
+    # First line of role
+    if match(role,trim(s,' ',1)) then {
+
+      # Go to second line
+      j := i + 1
+
+      # Keep adding lines
+      while not (trim(L[j],' \t',1) ? (tab(many(&ucase)) & tab(any(':.')))) do {
+        s ||:= "\n " || L[j]
+        delete(L,j)
+      }
+
+      # Get user input
+      write(role,": ")
+      line := read()
+
+      # Test input
+      if (role || "  " || supertrim(line,'\n,.!?')) == supertrim(s,'\n,.!?') then {
+        i +:= 1
+        next
+      } else {
+        write("No, you said --> ",
+          image((role || "  " || supertrim(line,'\n,.!?'))),
+          "\nThe line is ---> ", image(supertrim(s,'\n,.!?')),
+          "\n<--")
+      }
+
+    } else {
+      write(s)
+      delay(500)
+    }
+
+    i +:= 1
+
+  }
+
+end
+
+procedure supertrim(s,c : ',.?!')
+  s := trim(s,' \t',0)
+  while s[upto(c,s)] := ""
+  return s
+end
+
+procedure playurl(s)
+
+  static t
+
+  initial {
+    t := table()
+    t["The Beggar's Opera"] := t["BO"] := "opera.txt"
+  }
+
+  return \ (t[s])
+
+end
+
+procedure readin(s)
+
+  local f, L := []
+
+  if not (f := open(playurl(s))) then
+    stop("usage: thespian play act scene role")
+
+  while line := read(f) do
+    put(L,line)
+
+  write("Read ",*L," lines.")
+
+  return L
+
+end
+
+
+procedure selectscene(L,act,scene)
+
+  local i, as
+
+  as := "ACT " || act || ".  SCENE " || scene || "."
+
+  while L[1] ~== as do
+    pop(L)
+
+  if *L = 0 then
+    stop("didnt find ", as)
+
+  write(pop(L))
+  write(pop(L))
+
+  i := 1
+  while i < *L do {
+    if match("ACT",L[i]) then {
+      L := L[1:i]
+      break
+    }
+    i +:= 1
+  }
+
+  return L
+
+end
