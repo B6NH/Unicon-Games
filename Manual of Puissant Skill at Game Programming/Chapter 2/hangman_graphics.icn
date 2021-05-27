@@ -3,31 +3,29 @@
 
 procedure main()
 
-  local word, blanks, misses, letter
+  local word, blanks, misses, letter, chances
 
   w := open("hangman","g","size=400,400")
 
   word := ?["beagle","tiger"]
   blanks := repl("-",*word)
   misses := 0
+  chances := 7
+
+  write("***HANGMAN***.")
 
   repeat {
 
-    if misses = 1 then DrawCircle(w,300,50,25)
-    if misses = 2 then DrawLine(w,300,75,300,150)
-    if misses = 3 then DrawLine(w,300,75,250,125)
-    if misses = 4 then DrawLine(w,300,75,350,125)
-    if misses = 5 then {
-      DrawLine(w,300,150,250,200)
-      DrawLine(w,300,150,350,200)
-    }
+    drawImage(misses,w)
+    WSync()
 
-    if misses = 5 then {
+    if misses = chances then {
       write("You lose! ",getStr(word))
       delay(5000)
       stop()
     }
 
+    write("You have ", 7 - misses, " chances. Enter a letter: ")
     write(blanks)
     letter := read()
 
@@ -40,6 +38,34 @@ procedure main()
     if not find("-",blanks) then
       stop("You win! ",getStr(word))
 
+  }
+
+end
+
+procedure drawImage(misses,w)
+
+  # Head
+  if misses = 1 then DrawCircle(w,300,50,25)
+
+  # Body
+  if misses = 2 then DrawLine(w,300,75,300,150)
+
+  # Lef hand
+  if misses = 3 then DrawLine(w,300,75,250,125)
+
+  # Right hand
+  if misses = 4 then DrawLine(w,300,75,350,125)
+
+  # Left eye
+  if misses = 5 then DrawCircle(w,290,50,5)
+
+  # Right eye
+  if misses = 6 then DrawCircle(w,310,50,5)
+
+  # Legs
+  if misses = 7 then {
+    DrawLine(w,300,150,250,200)
+    DrawLine(w,300,150,350,200)
   }
 
 end

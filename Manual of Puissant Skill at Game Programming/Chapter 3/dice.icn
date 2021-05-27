@@ -1,0 +1,144 @@
+
+# Dice
+
+procedure main()
+
+  score := list(15)
+  category := [1,2,3,4,5,6,"1 pair","2 pair","3 of a Kind","4 of a Kind",
+              "Small straight","Large straight","Full house","Chance",
+              "Yatzy"]
+  askCategory := "What category do you want to score in (1-15): "
+
+  # Turns
+  every turn := 1 to 15 do {
+
+    # First roll
+    dice := [?6,?6,?6,?6,?6]
+    showDice("The dice are: ",dice)
+
+    # Reroll 2 times
+    every 1 to 2 do {
+
+      write("Which dice do you keep?")
+      keep := read()
+
+      every i := 1 to 5 do {
+
+        # Reroll or skip dice
+        if not find(dice[i],keep) then
+          dice[i] := ?6
+        else
+          keep[find(dice[i],keep)] := ""
+
+      }
+
+      showDice("The dice are: ",dice)
+
+    }
+
+    # Sorted dice
+    dice := sort(dice)
+    showDice("You ended with: ",dice)
+
+    # Show categories
+    every i := 1 to 15 do {
+      writes(i,"\t",left(category[i],15),"\t")
+      write(\score[i] | "available")
+    }
+
+    write(askCategory)
+
+    repeat {
+
+      cat := read() | stop("terminated, end of file")
+
+      # Break if unused category was found
+      if /score[integer(cat)] then
+        break
+
+      write(askCategory)
+
+    }
+
+
+    points := 0
+    case category[cat] of {
+
+      !6: every !dice=cat do points +:= cat
+
+      "1 pair":
+
+        if dice[j := (4|3|2|1)] = dice[j+1] then
+          points := dice[j]*2
+
+      "2 pair":
+
+        if (dice[j := (4|3)] = dice[j+1]) &
+           (dice[k := (j-2 to 1 by -1)] = dice[k+1]) then
+          points := dice[j]*2 + dice[k]*2
+
+      "3 of a Kind":
+
+        if dice[j := (3|2|1)]=dice[j+2] then
+          points := dice[j]*3
+
+      "4 of a Kind":
+
+        if dice[j := (2|1)]=dice[j+3] then
+          points := dice[j]*4
+
+      "Small straight":
+
+        points := (if dice[j:=!5]~=j then 0 else 15)
+
+      "Large straight":
+
+        points := (if dice[j:=!5]~=j+1 then 0 else 20)
+
+      "Full house":
+
+        if ((dice[1]=dice[3])&(dice[4]=dice[5])) |
+            (dice[1]=dice[2])&(dice[3]=dice[5]) then
+          every points +:= !dice
+
+      "Chance":
+
+        every points +:= !dice
+
+      "Yatzy":
+
+        if dice[1]=dice[5] then
+          points := 50
+
+    }
+
+    score[cat] := points
+
+  }
+
+  write("Final score: ")
+
+  total := 0
+  every i := 1 to 15 do {
+
+    total +:= score[i]
+
+    writes(i,"\t",left(category[i],15),"\t")
+    write(\score[i] | "available")
+
+    sum := score[1]+score[2]+score[3]+score[4]+score[5]+score[6]
+
+    if (i=6) & (sum>62) then {
+      write("\tbonus\t50")
+      total +:= 50
+    }
+
+  }
+
+  write("\t",left("Total:",15),total)
+
+end
+
+procedure showDice(message,dice)
+  write(message,dice[1],dice[2],dice[3],dice[4],dice[5])
+end

@@ -71,20 +71,28 @@ procedure main(arg)
 end
 
 procedure supertrim(s,c : ',.?!')
+
+  # Trim at both ends
   s := trim(s,' \t',0)
+
+  # Remove characters from set c found in s
   while s[upto(c,s)] := ""
+
   return s
+
 end
 
 procedure playurl(s)
 
   static t
 
+  # Initialize table
   initial {
     t := table()
     t["The Beggar's Opera"] := t["BO"] := "opera.txt"
   }
 
+  # Return data if not null
   return \ (t[s])
 
 end
@@ -93,12 +101,15 @@ procedure readin(s)
 
   local f, L := []
 
+  # Open file
   if not (f := open(playurl(s))) then
     stop("usage: thespian play act scene role")
 
+  # Read lines from file
   while line := read(f) do
     put(L,line)
 
+  # Report
   write("Read ",*L," lines.")
 
   return L
@@ -112,15 +123,18 @@ procedure selectscene(L,act,scene)
 
   as := "ACT " || act || ".  SCENE " || scene || "."
 
+  # Remove lines before
   while L[1] ~== as do
     pop(L)
 
+  # All lines removed. Scene was not found
   if *L = 0 then
     stop("didnt find ", as)
 
   write(pop(L))
   write(pop(L))
 
+  # Find where next scene starts
   i := 1
   while i < *L do {
     if match("ACT",L[i]) then {
@@ -130,6 +144,7 @@ procedure selectscene(L,act,scene)
     i +:= 1
   }
 
+  # Return lines for scene
   return L
 
 end
