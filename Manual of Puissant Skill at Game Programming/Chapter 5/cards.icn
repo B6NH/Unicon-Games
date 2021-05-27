@@ -1,0 +1,119 @@
+
+# Cards
+
+link random
+link drawcard
+procedure main()
+
+  &window := open("War","g")
+  limit := 20
+  delayTime := 500
+
+  # Create cards
+  deck := createCards()
+
+  # Show sorted cards
+  showCards(deck)
+
+  # Shuffle
+  shuffleCards(deck)
+
+  line()
+
+  # Show shuffled cards
+  showCards(deck)
+
+  line()
+
+  Player1 := []
+  Player2 := []
+
+  # Deal cards
+  dealCards(Player1,Player2,deck)
+
+  while *Player1 > limit & *Player2 > limit do {
+
+    showPlayer("Player1",Player1)
+    showPlayer("Player2",Player2)
+
+    EraseArea()
+
+    DrawString(10,50,"Player 1:")
+    drawcard(80,10,Player1[1][3])
+
+    DrawString(210,50,"Player 2:")
+    drawcard(280,10,Player2[1][3])
+
+    WSync()
+
+    delay(delayTime)
+
+    if Player1[1][1] > Player2[1][1] then {
+
+      write("Player1 wins")
+      put(Player1,pop(Player2),pop(Player1))
+
+    } else if Player1[1][1] < Player2[1][1] then {
+
+      write("Player2 wins")
+      put(Player2,pop(Player2),pop(Player1))
+
+    } else {
+
+      write("Tie")
+      put(Player1,pop(Player1))
+      put(Player2,pop(Player2))
+
+    }
+
+  }
+
+  line()
+
+  if *Player1 = limit then
+    write("Player2 wins")
+  else
+    write("Player1 wins")
+
+end
+
+procedure createCards()
+
+  randomize()
+
+  deck := []
+  suits := ["hearts","spades","clubs","diamonds"]
+
+  every i := 1 to 4 do
+    every j := 1 to 13 do
+      put(deck,
+          [j, suits[i], char(ord("A") + (i - 1) * 13 +
+           j - 1 + if i < 3 then 0 else 6)])
+
+  return deck
+
+end
+
+procedure showCards(deck)
+  every card := !deck do
+    write(card[1]," of ",card[2], " - ",card[3])
+end
+
+procedure showPlayer(name,player)
+  write(name,": ", player[1][1], " of ", player[1][2],"(",*player,")")
+end
+
+procedure shuffleCards(deck)
+  every 1 to 100 do ?deck :=: ?deck
+end
+
+procedure dealCards(player1,player2,deck)
+  every 1 to 26 do {
+    put(player1,pop(deck))
+    put(player2,pop(deck))
+  }
+end
+
+procedure line()
+  write(repl("-",30))
+end
