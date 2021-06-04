@@ -1,0 +1,297 @@
+
+# Hamurabi
+
+procedure main()
+
+  write(right("*** HAMURABI ***\n",30))
+
+  write("Try your hand at governing ancient Sumeria\n_
+         successfully for a 10 year term of office.")
+
+  Babylon().play()
+
+end
+
+# Year, Dead, Total Dead, Immigrants, Population,
+# Starvation Percentage, Acres, Yield, Eaten,
+# Store, Random yearly yield modifier, Input,
+# Acres per person
+class Babylon(Z,D,D1,I,P,P1,A,Y,E,S,C,Q,L,H)
+
+  method play()
+
+    repeat {
+
+      report()
+      buy()
+      sell()
+      feed()
+      plant()
+      harvest()
+
+    }
+
+  end
+
+  method report()
+
+    write("\n\nHamurabi: I beg to report to you,")
+
+    # Next year
+    Z +:= 1
+
+    write("in year ",Z,", ", D, " people starved; ", I,
+          " came to the city.")
+
+    # Add immigrants to population
+    P +:= I
+
+    # Plague
+    if Q <= 0 then {
+      P /:= 2
+      write("A horrible plague struck! Half the people died.")
+    }
+
+    write("Population is now ",P,". The city now owns ",
+           A, " acres.")
+
+    write("You harvested ",Y," bushels per acre. Rats ate ",
+           E, " bushels.")
+
+    write("You now have ",S, " bushels in store.\n")
+
+    if Z == 11 then evaluate()
+
+  end
+
+  method buy()
+
+    C := ?11-1
+    Y := C + 17
+
+    write("Land is trading at " , Y, " bushels per acre.")
+
+    repeat {
+
+      writes("How many acres do you wish to buy? ")
+
+      Q := integer(read())
+
+      if Q < 0 then
+        finish("quit")
+      else if Y * Q <= S then
+        return
+      else {
+        write("Hamurabi: think again. You have only ",S)
+        write(" bushels of grain. Now then,")
+      }
+
+    }
+
+  end
+
+  method sell()
+
+    if Q == 0 then {
+
+      repeat {
+
+        writes("How many acres do you wish to sell?")
+
+        Q := integer(read())
+
+        if Q < 0 then
+          finish("quit")
+        else if Q < A then {
+          A -:= Q; S +:= Y * Q; C := 0
+          write()
+          break
+        } else {
+          write("Hamurabi: think again. You own only ", A,
+                " acres. Now then,")
+        }
+      }
+    } else {
+      A +:= Q ; S -:= Y * Q; C := 0
+      write()
+    }
+
+  end
+
+  method feed()
+
+    repeat {
+
+      writes("How many bushels shall we feed your people? ")
+
+      Q := integer(read())
+
+      if Q < 0 then
+        finish("quit")
+      else {
+
+        if Q <= S then
+          break
+        else {
+
+          write("Hamurabi: think again. You have only")
+          write(S," bushels of grain. Now then,")
+
+        }
+      }
+
+      S -:= Q
+      C := 1
+      write()
+
+    }
+
+  end
+
+  method plant()
+
+    repeat {
+      writes("How many acres do you wish to plant? ")
+      D := integer(read())
+      if D == 0 then
+        return
+      else if D < 0 then
+        finish("quit")
+      else if D <= A then {
+
+        if (D / 2) < S then {
+
+          if (D < (10 * P)) then {
+            S -:= D / 2
+            return
+          } else {
+            write("but you have only ",P,
+                  " people to tend the fields. Now then,")
+            next
+          }
+
+        } else {
+          write("Hamurabi: think again. You have only ",S,
+                " bushels of grain. Now then,")
+          next
+        }
+
+        break
+
+      } else {
+        write("Hamurabi: think again. You own only ",A,
+              " acres. Now then,")
+      }
+    }
+
+  end
+
+  method harvest()
+
+    C := integer(?0 * 5 + 1)
+    Y := C ; H := D * Y; E := 0
+    C := integer(?0 * 5 + 1)
+
+    # Rats
+    if C % 2 = 0 then {
+      E := S / C
+    }
+
+    S := S - E + H
+    C := ?0 * 5 + 1
+    I := integer((C * (20 * A + S) / P / 100 + 1))
+    C := integer(Q / 20)
+    Q := integer(10 * (2 * ?0 -.3))
+
+    if P > C then {
+      D := 0; return
+    } else {
+      D := P - C
+      if D > .45 * P then {
+        write("\nYou starved ",D," people in one year!")
+        finish("fink")
+      } else {
+        P1 := ((Z - 1) * P1 + D * 100 / P) / Z
+        P := C
+        D1 +:= D
+        return
+      }
+    }
+
+  end
+
+  method evaluate()
+
+    write("In your 10-year term of office, ",P1,
+          " percent of the population starved per year on _
+          average, i.e., a total of ",D1," people died!")
+
+    L := A / P
+
+    write("You started with 10 acres/person and ended with ",
+          L," acres/person.\n")
+
+    if P1 > 33 | L < 7 then
+      finish("fink")
+    else if P1 > 10 | L < 9 then
+      finish("nero")
+    else if P1 > 3 | L < 10 then
+      finish("notbad")
+    else
+      finish("fantastic")
+
+  end
+
+  method finish(as)
+
+    case as of {
+
+      "quit": {
+        write("Hamurabi: I cannot do what you wish.")
+        write("Get yourself another steward!")
+      }
+
+      "fantastic": {
+        write("A fantastic performance! Charlemagne, _
+               Disraeli, and Jefferson combined could not _
+               have done better!")
+      }
+
+      "fink": {
+        write("Due to this extreme mismanagement you have _
+               not only been impeached and thrown out of _
+               office but you have also been declared 'national _
+               fink'!")
+      }
+
+      "nero": {
+        write("Your heavy-handed performance smacks of _
+              Nero and Ivan IV. The people (remaining) find _
+              you an unpleasant ruler, and frankly, hate _
+              your guts!")
+      }
+
+      "not bad": {
+        write("Your perforemance could have been somewhat _
+               better, but really wasn't too bad at all. ",
+               integer(P * .8 * ?0), " people would dearly like _
+               to see you assassinated but we all have _
+               our trivial problems.")
+      }
+
+    }
+
+  end
+
+  initially
+    Z := D := C := D1 := P1 := 0
+    P := 95
+    S := 2800
+    H := 3000
+    E := H - S
+    Y := 3
+    A := H / Y
+    I := 5
+    Q := 1
+
+end

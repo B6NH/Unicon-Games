@@ -1,0 +1,175 @@
+
+# Checkers
+
+procedure main()
+
+  local board
+
+  board := createBoard()
+
+  play(board)
+
+end
+
+procedure play(board)
+
+  local turn, input, L, r
+
+  turn := "red"
+
+  while find("red",!!board) & find("white",!!board) do {
+
+    drawBoard(board)
+
+    repeat {
+
+      # Get player input
+      write(turn,"'s turn, move in row,col,...row,col format:")
+      input := read()
+
+      # Add numbers to list
+      L := []
+      input ? while put(L,integer(tab(many(&digits)))) do =","
+
+      # Invalid initial position
+      if not find(turn,board[L[1],L[2]]) then {
+
+        write("Requested move is illegal, try again.")
+        next
+
+      }
+
+      # Check targets
+      every i := 3 to *L by 2 do {
+
+        # Target is not empty. Check next one
+        if not isEmpty(board,L[i],L[i+1]) then
+          next
+
+        r := moveChecker(board,L,turn)
+
+        if r == "bb" then
+          break break
+        else if r == "bn" then
+          break next
+
+      }
+
+      break
+
+    }
+
+    turn := nextTurn(turn)
+
+  }
+
+end
+
+procedure moveChecker(board,L,turn)
+
+  local r
+
+  r := if find("queen",board[L[1],L[2]]) then
+    moveQueen(board,L)
+  else
+    moveRegular(board,L,turn)
+
+  return r
+
+end
+
+procedure moveQueen(board,L)
+
+  if abs(L[3]-L[1]) = abs(L[4]-L[2]) = 1 then {
+
+    board[L[1],L[2]] :=: board[L[3],L[4]]
+    return "bb"
+
+  } else if abs(L[i] - L[i-2]) = abs(L[i+1]-L[i-1]) = 2 then {
+
+    board[L[i],L[i+1]] :=: board[L[i-2],L[i-1]]
+    board[(L[i]+L[i-2])/2, (L[i+1]+L[i-1])/2] := " "
+
+  } else {
+
+    write("Cant perform requested move.")
+    return "bn"
+
+  }
+
+end
+
+procedure moveRegular(board,L,turn)
+
+  local direction
+
+  direction := (if turn == "red" then -1 else 1)
+
+  if abs(L[2]-L[4]) = 1 & (L[3]-L[1]) = direction then {
+
+    board[L[1],L[2]] :=: board[L[3],L[4]]
+    return "bb"
+
+  } else if abs(L[i]-L[i-2]) = 2 & (L[i+1]-L[i-1]) = direction*2 then {
+
+    board[L[i],L[i+1]] :=: board[L[i-2],L[i-1]]
+    board[(L[i]+L[i-2])/2, (L[i+1]+L[i-1])/2] := " "
+
+  } else {
+
+    write("Cant perform requested move.")
+    return "bn"
+
+  }
+
+end
+
+procedure createBoard()
+
+  local rows
+
+  rows := list(8)
+
+  every !rows := list(8," ")
+
+  every row := 1 to 3 do
+    every col := 1 + (row % 2) to 8 by 2 do
+      rows[row,col] := "white"
+
+  every row := 6 to 8 do
+    every col := 1 + (row % 2) to 8 by 2 do
+      rows[row,col] := "red"
+
+  return rows
+
+end
+
+procedure isEmpty(board,i,j)
+  return board[i,j] == " "
+end
+
+
+procedure drawBoard(rows)
+
+  write("   \\ 1 2 3 4 5 6 7 8  column")
+
+  write("row -----------------")
+
+  every i := 1 to 8 do {
+
+    writes(" ",i,"  ")
+
+    every j := 1 to 8 do
+      writes("|",rows[i,j,1])
+
+    write("|")
+
+    write("    -----------------")
+
+  }
+
+end
+
+procedure nextTurn(turn)
+  return if turn == "red" then "white" else "red"
+end
