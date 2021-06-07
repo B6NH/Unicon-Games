@@ -1,9 +1,33 @@
 
 # Checkers
 
+global side, halfSide, radius
+
 procedure main()
 
-  local board
+  local board, color
+
+  &window := open("Checkers","g","size=512,512")
+
+  side := 40
+  halfSide := side / 2
+  radius := 10
+  color := "green"
+
+  every i := 1 to 8 do
+    every j := 1 + (i % 2) to 8 by 2 do {
+
+      Fg(color)
+      FillRectangle((j-1) * side,(i-1) * side,side,side)
+
+      if (1 <= i <= 3) then {
+        drawCircle(i,j,"red")
+      }
+      else if (6 <= i <= 9) then {
+        drawCircle(i,j,"blue")
+      }
+
+    }
 
   board := createBoard()
 
@@ -15,9 +39,9 @@ procedure play(board)
 
   local turn, input, L, r
 
-  turn := "red"
+  turn := "blue"
 
-  while find("red",!!board) & find("white",!!board) do {
+  while find("red",!!board) & find("blue",!!board) do {
 
     drawBoard(board)
 
@@ -46,7 +70,7 @@ procedure play(board)
         if not isEmpty(board,L[i],L[i+1]) then
           next
 
-        r := moveChecker(board,L,turn)
+        r := moveChecker(board,L,turn,i)
 
         if r == "bb" then
           break break
@@ -65,20 +89,20 @@ procedure play(board)
 
 end
 
-procedure moveChecker(board,L,turn)
+procedure moveChecker(board,L,turn,i)
 
   local r
 
   r := if find("queen",board[L[1],L[2]]) then
-    moveQueen(board,L)
+    moveQueen(board,L,i)
   else
-    moveRegular(board,L,turn)
+    moveRegular(board,L,turn,i)
 
   return r
 
 end
 
-procedure moveQueen(board,L)
+procedure moveQueen(board,L,i)
 
   if abs(L[3]-L[1]) = abs(L[4]-L[2]) = 1 then {
 
@@ -99,21 +123,28 @@ procedure moveQueen(board,L)
 
 end
 
-procedure moveRegular(board,L,turn)
+procedure moveRegular(board,L,turn,row)
 
   local direction
 
-  direction := (if turn == "red" then -1 else 1)
+  direction := (if turn == "blue" then -1 else 1)
 
+  # Move 1 column (left or right) and 1 row in valid direction
   if abs(L[2]-L[4]) = 1 & (L[3]-L[1]) = direction then {
 
     board[L[1],L[2]] :=: board[L[3],L[4]]
+    animateMove([L[1],L[2]],[L[3],L[4]],turn)
     return "bb"
 
-  } else if abs(L[i]-L[i-2]) = 2 & (L[i+1]-L[i-1]) = direction*2 then {
+  # Move 2 columns and 2 rows in valid direction
+  # Even entries are columns and odd entries are rows
+  } else if (L[row]-L[row-2]) = direction*2 & abs(L[row+1]-L[row-1]) = 2 then {
 
-    board[L[i],L[i+1]] :=: board[L[i-2],L[i-1]]
-    board[(L[i]+L[i-2])/2, (L[i+1]+L[i-1])/2] := " "
+    board[L[row],L[row+1]] :=: board[L[row-2],L[row-1]]
+    board[(L[row]+L[row-2])/2, (L[row+1]+L[row-1])/2] := " "
+    animateMove([L[row-2], L[row-1]], [L[row],L[row+1]],turn)
+
+    return "next"
 
   } else {
 
@@ -134,11 +165,11 @@ procedure createBoard()
 
   every row := 1 to 3 do
     every col := 1 + (row % 2) to 8 by 2 do
-      rows[row,col] := "white"
+      rows[row,col] := "red"
 
   every row := 6 to 8 do
     every col := 1 + (row % 2) to 8 by 2 do
-      rows[row,col] := "red"
+      rows[row,col] := "blue"
 
   return rows
 
@@ -171,5 +202,80 @@ procedure drawBoard(rows)
 end
 
 procedure nextTurn(turn)
-  return if turn == "red" then "white" else "red"
+  return if turn == "red" then "blue" else "red"
+end
+
+procedure animateMove(start,target,turn)
+
+  speed := 3
+
+  # Center of current square
+  currentPos := calculatePosition(start[1],start[2])
+
+  # Center of target square
+  targetPos := calculatePosition(target[1],target[2])
+
+  # Calculate unit vector
+  vector := subVectors(targetPos,currentPos)
+  magnitude := sqrt(vector[1]^2+vector[2]^2)
+  unit := [vector[1]/magnitude,vector[2]/magnitude]
+
+  checkCondition := if turn == "blue" then checkBlue else checkRed
+
+  while checkCondition(currentPos,targetPos) do {
+
+    write(currentPos[1],",",currentPos[2])
+
+    Fg("green")
+
+    # Draw background
+    FillRectangle(currentPos[2]-halfSide,currentPos[1]-halfSide,side,side)
+
+    Fg(turn)
+
+    # Draw pawn
+    FillCircle(currentPos[2],currentPos[1],radius)
+
+    WSync()
+
+    currentPos[1] +:= unit[1]*speed
+    currentPos[2] +:= unit[2]*speed
+
+    delay(50)
+
+  }
+
+end
+
+# Go up while current position is lower than target
+procedure checkBlue(currentPos,targetPos)
+  return currentPos[1] > targetPos[1]
+end
+
+# Go down while current position is higher than target
+procedure checkRed(currentPos,targetPos)
+  return currentPos[1] < targetPos[1]
+end
+
+procedure countPixels(rowOrCol)
+  return (rowOrCol - 1) * side
+end
+
+procedure calculatePosition(row,col)
+  return [countPixels(row) + halfSide,countPixels(col) + halfSide]
+end
+
+procedure subVectors(a,b)
+  return [a[1] - b[1], a[2] - b[2]]
+end
+
+procedure drawCircle(i,j,color)
+
+  local pos
+
+  pos := calculatePosition(i,j)
+
+  Fg(color)
+  FillCircle(pos[2],pos[1],radius)
+
 end
