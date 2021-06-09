@@ -1,0 +1,184 @@
+
+# Tic Tac
+
+global symbolX, symbolO, squareSide
+
+procedure main()
+
+  local board, turn, count, index, x, y
+
+  &window := open("TicTac","g","size=600,600","linewidth=5")
+
+  # Global
+  squareSide := 100
+  symbolX := "x" ; symbolO := "o"
+
+  # Local
+  count := 0
+  board := list(9," ")
+  turn := symbolX
+
+  drawGraphicBoard()
+
+  repeat {
+
+    # Get mouse click
+    if Event() === &lpress then {
+
+      # Calculate target square
+      y := &y / squareSide ; x := &x / squareSide
+
+      # Validate square position
+      if (y & x) < 3 then {
+
+        index := y * 3 + 1 + x
+
+        # Check if square is empty
+        if board[index] == " " then {
+
+          # Count moves
+          count +:= 1
+          board[index] := turn
+
+          if turn == symbolX then {
+            drawCross(x,y)
+            turn := symbolO
+          } else {
+            drawCirc(x,y)
+            turn := symbolX
+          }
+
+          # Check win
+          if won := checkWin(board) then
+            stop("Player ",won," wins")
+          else if count > 8 then
+            stop("Cat game!")
+
+        }
+
+      }
+
+    }
+
+  }
+
+end
+
+procedure checkWin(board)
+
+  local r
+
+  # Check rows and columns
+  every i := 1 to 3 do {
+
+    # Horizontal
+    if r := board[i*3-2]==board[i*3-1]==board[i*3]==(symbolX|symbolO) then
+      return r
+
+    # Vertical
+    if r := board[i]==board[i+3]==board[i+6]==(symbolX|symbolO) then
+      return r
+
+  }
+
+  # Top-Left to Bot-Right Diagonal
+  if r := board[1]==board[5]==board[9]==(symbolX|symbolO) then
+    return r
+
+  # Top-Right to Bot-Left Diagonal
+  if r := board[3]==board[5]==board[7]==(symbolX|symbolO) then
+    return r
+
+end
+
+procedure line()
+  write(repl("-",7))
+end
+
+procedure drawGraphicBoard()
+
+  local double, width
+
+  double := squareSide * 2 ; width := double + squareSide
+
+  # Draw lines
+
+  # Vertical
+  DrawLine(squareSide,0,squareSide,width)
+  DrawLine(double,0,double,width)
+
+  # Horizontal
+  DrawLine(0,squareSide,width,squareSide)
+  DrawLine(0,double,width,double)
+
+end
+
+# Draw board in console
+procedure drawBoard(square)
+
+  line()
+
+  every i := 1 to 3 do
+    write("|",square[i*3-2],"|",square[i*3-1],"|",square[i*3],"|")
+
+  line()
+
+end
+
+# Read input in console
+procedure readInput(turn,board)
+
+  local pick
+
+  repeat {
+    write("It is player ",turn,"'s turn. Pick a square from 1 to 9:")
+    pick := read()
+    if board[integer(pick)] == " " then return pick
+  }
+
+end
+
+# Next turn in console
+procedure nextTurn(turn)
+  return if turn == symbolX then symbolO else symbolX
+end
+
+procedure drawCirc(x,y)
+
+  static halfSide, radius
+
+  initial {
+    halfSide := squareSide / 2
+    radius := squareSide / 2.5
+  }
+
+  Fg("red")
+
+  DrawCircle(x * squareSide + halfSide, y * squareSide + halfSide, radius)
+
+end
+
+procedure drawCross(x,y)
+
+  static gap, largeGap
+  local distanceX, distanceY, leftX, rightX, topY, botY
+
+  initial {
+    gap := 0.1 * squareSide
+    largeGap := squareSide - gap
+  }
+
+  Fg("blue")
+
+  distanceX := x * squareSide ; distanceY := y * squareSide
+
+  leftX := distanceX + gap ; rightX := distanceX + largeGap
+  topY := distanceY + gap ; botY := distanceY + largeGap
+
+  # Top-Left to Right-Bot
+  DrawLine(leftX,topY,rightX,botY)
+
+  # Top-Right to Left-Bot
+  DrawLine(rightX,topY,leftX,botY)
+
+end
