@@ -1,0 +1,288 @@
+
+# Pirates
+
+link graphics
+global player, world
+procedure main()
+
+  &window := open("Pirate Duel","g","rows=24","columns=80")
+
+  # Load ship from file
+  world := ship("ship.dat")
+
+  # Create player
+  player := character()
+
+  # Add enemy
+  world.add_npc("P")
+
+  # Draw world
+  world.draw()
+
+  repeat {
+
+    player.turn()
+    if (!world.npcs).turn() then break
+    world.draw()
+
+  }
+
+  world.draw()
+  while Event() ~== "q"
+  stop()
+
+end
+
+class World(grid,npcs)
+
+  method add_npc(s)
+    put(npcs,npc(s))
+  end
+
+  method draw()
+
+    every r := 1 to 24 do {
+      GotoRC(r,1)
+      WWrites(left(grid[r],80," "))
+    }
+
+    grid[1] := ""
+
+  end
+
+  initially
+    npcs := []
+
+end
+
+class ship : World(shipfile)
+
+  initially
+
+    # Base class constructor
+    self.World.initially()
+
+    # Create grid
+    grid := list(24)
+
+    # Fill grid with blanks
+    every !grid := repl(" ",80)
+
+    # Open file with ship data
+    f := open(shipfile) | stop("can't open ",image(shipfile))
+
+    # Read all lines
+    i := 1
+    while line := read(f) do {
+
+      # Copy line from file to grid
+      grid[i][1:*line+1] := line
+      i +:= 1
+
+    }
+
+    close(f)
+
+end
+
+class character(x,y,name,hitpoints,armorclass,damage)
+
+  method hittest(enemy)
+
+    die := ?20
+    if (die > 10 + (9 - enemy.armorclass)) then {
+      enemy.hitpoints -:= ?damage
+      return
+    }
+
+  end
+
+  method attack(enemy)
+
+    if hittest(enemy) then {
+
+      world.grid[1] ||:= "You have hit the " || enemy.name || "."
+      enemy.awake := 1
+
+      if enemy.hitpoints < 1 then {
+
+        world.grid[1] ||:= "You have defeated the " || enemy.name
+        enemy.die()
+
+      }
+
+    } else {
+
+      world.grid[1] ||:= "You missed the " || enemy.name || "."
+      if /(enemy.awake) := (?1=1) then
+        world.grid[1] ||:= "The enemy awakes."
+
+    }
+
+  end
+
+  # Move player
+  method move(newx,newy,letter : "@")
+    world.grid[y,x] := "."
+    x := newx ; y := newy
+    world.grid[y,x] := letter
+  end
+
+  # Move or attack enemy
+  method trymove(newx,newy)
+    if world.grid[newy, newx] == "." then
+      move(newx, newy)
+    else if (m := !world.npcs) & m.y = newy & m.x = newx then
+      attack(m)
+  end
+
+  method turn()
+
+    e := Event()
+
+    case e of {
+
+      # Quit
+      "q": {
+        stop("goodbye")
+      }
+
+      # Left
+      "h": {
+        trymove(x-1,y)
+      }
+
+      # Right
+      "l": {
+        trymove(x+1,y)
+      }
+
+      # Up
+      "k": {
+        trymove(x,y-1)
+      }
+
+      # Down
+      "j": {
+        trymove(x,y+1)
+      }
+
+      # Up-Left
+      "y": {
+        trymove(x-1,y-1)
+      }
+
+      # Up-Right
+      "u": {
+        trymove(x+1,y-1)
+      }
+
+      # Down-Left
+      "b": {
+        trymove(x-1,y+1)
+      }
+
+      # Down-Right
+      "n": {
+        trymove(x+1,y+1)
+      }
+
+    }
+
+  end
+
+  method place(c)
+
+    repeat {
+
+      x := ?80
+      y := ?24
+
+      if world.grid[y,x] == "." then {
+        world.grid[y,x] := c
+        break
+      }
+
+    }
+
+  end
+
+  initially
+    place("@")
+    hitpoints := 12
+    damage := 6
+    armorclass := 6
+
+end
+
+class npc : character(awake,letter)
+
+  method die()
+    world.grid[y,x] := "."
+    every 1 to *world.npcs do {
+      put(world.npcs,self ~=== pop(world.npcs))
+    }
+  end
+
+  method distance(enemy,x,y)
+    return abs(y-enemy.y)^2 + abs(x-enemy.x)^2
+  end
+
+  method attack(enemy)
+
+    if hittest(enemy) then {
+      world.grid[1] ||:= "The " || name || " has hit you. "
+      if enemy.hitpoints < 1 then {
+        world.grid[1] ||:= "You were defeated by the " || name
+        return
+      }
+    } else {
+      world.grid[1] ||:= "The " || name || " missed you."
+    }
+
+  end
+
+  method turn()
+
+    local dist, minx, miny
+
+    if /awake then fail
+
+    every row := y - 1 to y + 1 do {
+      every col := x - 1 to x + 1 do {
+        if world.grid[row,col] == "@" then {
+          return attack(player)
+        }
+      }
+    }
+
+    dist := distance(player,x,y)
+
+    every row := y - 1 to y + 1 do {
+      every col := x - 1 to x + 1 do {
+        if world.grid[row,col] == "." &
+           dist >:= distance(player,col,row) then {
+          minx := col ; miny := row
+        }
+      }
+    }
+
+    if \minx then
+      move(minx,miny,letter)
+
+  end
+
+  initially(c)
+
+    static nametable
+    /nametable := table("O","Orc","P","Pirate")
+    letter := \c | ?"PO"
+    name := nametable[letter]
+    if awake := (?3 = 1) then
+      world.grid[1] ||:= "The " || name || " is awake. "
+    hitpoints := ?8
+    armorclass := 6
+    damage := 8
+    place(letter)
+
+end
