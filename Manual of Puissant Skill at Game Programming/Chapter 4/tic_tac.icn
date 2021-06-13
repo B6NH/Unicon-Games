@@ -1,66 +1,65 @@
 
 # Tic Tac
 
-global symbolX, symbolO, squareSide
+global symbolX, symbolO, squareSide, count
 
-procedure main()
+procedure main(args)
 
-  local board, turn, count, index, x, y
+  local board, turn, index, x, y, nSquares
 
   &window := open("TicTac","g","size=600,600","linewidth=5")
 
   # Global
   squareSide := 100
   symbolX := "x" ; symbolO := "o"
+  count := 0
 
   # Local
-  count := 0
-  board := list(9," ")
+  nSquares := 9
+  board := list(nSquares," ")
   turn := symbolX
+  human := (args[1] == (symbolX | symbolO)) | symbolX
 
   drawGraphicBoard()
 
+  WSync()
+
   repeat {
 
-    # Get mouse click
-    if Event() === &lpress then {
+    pick := if human == turn then
+              humanMove(board,turn)
+            else
+              smartComputerMove(board,turn)
 
-      # Calculate target square
-      y := &y / squareSide ; x := &x / squareSide
+    # Count moves
+    count +:= 1
+    board[pick[1]] := turn
 
-      # Validate square position
-      if (y & x) < 3 then {
+    x := pick[2,1]
+    y := pick[2,2]
 
-        index := y * 3 + 1 + x
+    if turn == symbolX then {
+      drawCross(x,y)
+      turn := symbolO
+    } else {
+      drawCirc(x,y)
+      turn := symbolX
+    }
 
-        # Check if square is empty
-        if board[index] == " " then {
+    WSync()
 
-          # Count moves
-          count +:= 1
-          board[index] := turn
-
-          if turn == symbolX then {
-            drawCross(x,y)
-            turn := symbolO
-          } else {
-            drawCirc(x,y)
-            turn := symbolX
-          }
-
-          # Check win
-          if won := checkWin(board) then
-            stop("Player ",won," wins")
-          else if count > 8 then
-            stop("Cat game!")
-
-        }
-
-      }
-
+    # Check win
+    if won := checkWin(board) then {
+      write("Player ",won," wins")
+      break
+    } else if count >= nSquares then {
+      write("Cat game!")
+      break
     }
 
   }
+
+  delay(4000)
 
 end
 
@@ -180,5 +179,196 @@ procedure drawCross(x,y)
 
   # Top-Right to Left-Bot
   DrawLine(rightX,topY,leftX,botY)
+
+end
+
+procedure twoInRow(board,turn)
+
+  # Suspend turn symbol for all matching rows, columns and diagonals
+
+  every i := 1 to 3 do {
+
+    # Rows
+    if board[i*3-2]==" " & board[i*3-1]==board[i*3] then
+      suspend board[i*3]
+    if board[i*3-1]==" " & board[i*3-2]==board[i*3] then
+      suspend board[i*3]
+    if board[i*3]==" " & board[i*3-2]==board[i*3-1] then
+      suspend board[i*3-1]
+
+    # Columns
+    if board[i] == " " & board[i+3]==board[i+6] then
+      suspend board[i+6]
+    if board[i+3] == " " & board[i]==board[i+6] then
+      suspend board[i]
+    if board[i+6] == " " & board[i]==board[i+3] then
+      suspend board[i]
+
+  }
+
+  # Diagonals
+
+  # Top-Left to Bot-Right
+  if board[1]==" " & board[5]==board[9] then
+    suspend board[5]
+  if board[5]==" " & board[1]==board[9] then
+    suspend board[1]
+  if board[9]==" " & board[1]==board[5] then
+    suspend board[1]
+
+  # Top-Right to Bot-Left
+  if board[3]==" " & board[5]==board[7] then
+    suspend board[5]
+  if board[5]==" " & board[3]==board[7] then
+    suspend board[3]
+  if board[7]==" " & board[3]==board[5] then
+    suspend board[3]
+
+end
+
+procedure evaluate(board,turn)
+
+  # Win or Lose: +/-10000 points
+  # Player or Enemy 2 in row: +300/-1000
+
+  if won := checkWin(board) then {
+    return (if won == turn then 1 else -1) * 10000
+
+  } else {
+
+    points := 0
+    every play := twoInRow(board,turn) do {
+      points +:= if play == turn then 300 else -1000
+    }
+
+    return points
+
+  }
+
+end
+
+procedure checkTwoMoves(board,turn)
+
+  local nTurn, newboard, data, lowestEnemyPoints, bestI
+
+  nTurn := nextTurn(turn)
+
+  every board[i := 1 to 9] == " " do {
+
+    newboard := copy(board)
+    newboard[i] := turn
+
+    # Assume enemy best move
+    data := checkOneMove(newboard,nTurn)
+
+    # Find worst of enemy moves
+    if /bestI | (data[3] < lowestEnemyPoints) then {
+      lowestEnemyPoints := data[3]
+      bestI := i
+    }
+
+  }
+
+  # Return i where enemy has worst move
+  return [bestI,indexToXY(bestI)]
+
+end
+
+procedure checkOneMove(board,turn)
+
+  local newboard, points, bestpick, bestpoints
+
+  # Go through all free squares
+  every board[i := 1 to 9] == " " do {
+
+    # Place symbol on free square
+    newboard := copy(board)
+    newboard[i] := turn
+
+    points := evaluate(newboard,turn)
+    if /bestpick | (points > bestpoints) then {
+      bestpick := i
+      bestpoints := points
+    }
+
+  }
+
+  return [bestpick,indexToXY(bestpick),bestpoints]
+
+end
+
+procedure smartComputerMove(board,turn)
+
+  local data
+
+  write("...")
+
+  # Find best possible move
+  data := checkOneMove(board,turn)
+
+  delay(500)
+
+  # Return result for wining/last move or check 2 moves
+  return if data[3] == 1e4 | count > 7 then
+           [data[1],data[2]]
+         else
+           checkTwoMoves(board,turn)
+
+end
+
+procedure computerMove(board,turn)
+
+  local pick
+
+  write("...")
+
+  # Choose random free square
+  repeat {
+    pick := ?9
+    if board[integer(pick)] == " " then break
+  }
+
+  delay(500)
+
+  return [pick,indexToXY(pick)]
+
+end
+
+procedure humanMove(board,turn)
+
+  repeat {
+
+    if Event() === &lpress then {
+
+      # Calculate target square
+      y := &y / squareSide ; x := &x / squareSide
+
+      # Validate square position
+      if (y & x) < 3 then {
+
+        index := posXYtoIndex(x,y)
+
+        if board[index] == " " then
+          return [index,[x,y]]
+
+      }
+
+    }
+
+  }
+
+end
+
+procedure posXYtoIndex(x,y)
+  return y * 3 + 1 + x
+end
+
+procedure indexToXY(index)
+
+  local x, y
+
+  y := (index - 1) / 3
+  x := index - 3 * y - 1
+  return [x,y]
 
 end

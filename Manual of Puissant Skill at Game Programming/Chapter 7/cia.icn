@@ -1,0 +1,130 @@
+
+# CIA
+
+global verbs, directions, ca, vs, rooms,
+       ob, li, tt, maxtime, g, r, rs, n, ns
+
+procedure main()
+
+  init()
+  r := 1
+  write("\n",rooms[r].ds,"\n")
+
+  repeat {
+
+    if input() then {
+      if parsing() then
+        action()
+    } else {
+      command()
+    }
+
+  }
+
+  write("CIA")
+
+end
+
+record obj(as,ds,m,l,v,t)
+
+class room(ds,e)
+
+  initially(descrip,h,e1,e2,e3,e4)
+    ds := descrip
+    hs := h
+    e := [e1,e2,e3,e4]
+
+end
+
+procedure input()
+
+  rs := "" ; tt +:= 3
+
+  if tt > maxtime then
+    stop("Sorry... You ran out of time")
+
+  writes("\nNow what? ")
+  rs := read()
+  write()
+
+  rs ? if vs := tab(find(" ")) then { =" "; ns := tab(0); return }
+
+end
+
+procedure parsing()
+
+  if member(verbs,vs) then {
+
+    every n := 1 to *ob do {
+      if (ns == ob[n].as) & (ob[n].m = (r | 100)) then
+        return
+    }
+
+    write("It won't help")
+
+  } else {
+    write("I don't know how to ",vs)
+  }
+
+  vs := ns := &null
+
+end
+
+procedure go()
+
+  every j := 1 to 4 do {
+
+    if directions[j] == ns then {
+
+      if rooms[r].e[j] = 0 then { write("I can't go that direction"); return }
+      r := rooms[r].e[j]
+      write("\n",rooms[r].ds,"\n")
+      return
+
+    }
+
+  }
+
+end
+
+procedure init()
+
+  directions := [ "north", "east", "south", "west" ]
+  ca := []
+  li := []
+  tt := g := 0
+  et := 1000
+
+  ob := [
+
+    obj("north","it doesn't help",100,0,0,4),
+    obj("east","it doesn't help",100,0,0,4),
+    obj("south","it doesn't help",100,0,0,4),
+    obj("west","it doen't help",100,0,0,4)
+
+  ]
+
+  rooms := [
+
+    room("You are in your office at the CIA.\n_
+          On the shelves are tools you've used in past missions.\n_
+          Ambassador Griminski's apartment is North.",
+          "You'll need some tools to get into the apartment.", 2,0,0,0),
+
+    room("You are at 14 Parkside Avenue. The entrance to ambassador\n_
+          Griminski's small but elegant bachelor apartment. You see a \n_
+          heavy wooden door with a notice on it warning of an alarm system.",
+          "Maybe your tools will help you.", 0,0,1,0),
+
+    room("This is the marbled foyer of the ambassador's apartment. \n_
+          A table is in the corner. The master bedroom is east, the drawing \n_
+          room is north, and a closet west. A fierce dog charges to attack.",
+          "Something from your office could be helpful now.", 0,0,2,0)
+
+  ]
+
+  verbs := set([ "look","get","take","go","crawl","walk","open","read",
+                 "drop","call","unscrew","spray","push","load","run","drink",
+                 "eat","chew","unwrap","talk","shoot","unlock","on","off" ])
+
+end
