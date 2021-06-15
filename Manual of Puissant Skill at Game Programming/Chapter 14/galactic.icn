@@ -1,0 +1,6 @@
+
+# Galactic
+
+procedure main()
+  write("Galactic Network Upgrade War")
+end

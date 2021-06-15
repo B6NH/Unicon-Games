@@ -13,15 +13,14 @@ procedure main()
   repeat {
 
     if input() then {
-      if parsing() then
+      if parsing() then {
         action()
+      }
     } else {
       command()
     }
 
   }
-
-  write("CIA")
 
 end
 
@@ -56,8 +55,9 @@ procedure parsing()
   if member(verbs,vs) then {
 
     every n := 1 to *ob do {
-      if (ns == ob[n].as) & (ob[n].m = (r | 100)) then
+      if (ns == ob[n].as) & (ob[n].m = (r | 100)) then {
         return
+      }
     }
 
     write("It won't help")
@@ -71,20 +71,14 @@ procedure parsing()
 end
 
 procedure go()
-
   every j := 1 to 4 do {
-
     if directions[j] == ns then {
-
       if rooms[r].e[j] = 0 then { write("I can't go that direction"); return }
       r := rooms[r].e[j]
       write("\n",rooms[r].ds,"\n")
       return
-
     }
-
   }
-
 end
 
 procedure init()
@@ -93,14 +87,112 @@ procedure init()
   ca := []
   li := []
   tt := g := 0
-  et := 1000
+  maxtime := 1000
 
   ob := [
 
     obj("north","it doesn't help",100,0,0,4),
     obj("east","it doesn't help",100,0,0,4),
     obj("south","it doesn't help",100,0,0,4),
-    obj("west","it doen't help",100,0,0,4)
+    obj("west","it doesn't help",100,0,0,4),
+
+    obj("shelves","Shelves for weapons and tools line the wall next to your_
+         desk.\nThere are numerous items which may help you on your _
+         assignment.", 1,6,0,3),
+
+    obj("screwdriver", "an all-purpose screwdriver with collapsible handle.",
+         1,7,0,1),
+
+    obj("bomb", "a mark mx high-intensity smoke bomb", 1,8,0,1),
+    obj("pistol", "an automatic ppk-3 pistol", 1,9,0,1),
+    obj("key", "a skeleton key", 1,10,0,1),
+    obj("drug","a small can of insta-knockout drug", 1,11,0,1),
+
+    obj("gun", "a mark 3k harpoon gun with grapple and line", 1,0,0,1),
+    obj("door","The heavy door is painted black. A brass keyhole and _
+         doorknob are here. You can see the circular holes on either side _
+         of the door which must mean an electronic alarm beam.", 2,13,0,5),
+    obj("alarm","The alarm is screwed into place.",2,0,0,5),
+    obj("dog","The savage doberman leaps at you with bared fangs.\n _
+         He will not let you past him.", 3,0,0,4),
+    obj("table","The venetian front hall table has a tortoise shell letter\n_
+         tray on it for business cards and mail. There is a letter on the _
+         tray.", 3,0,0,1),
+    obj("letter","This is apparently a phone bill that has been paid and\n_
+         is being sent to the telephone company.", 3,0,10,1),
+    obj("umbrella","There is a black businessman's umbrella with a _
+         pointed end.", 4,18,0,1),
+    obj("briefcase","There is a black leather briefcase with a _
+         combination lock.", 4,0,0,1),
+    obj("desk", "The large oak desk has a blotter and pen set on it. _
+         A phone is here. a blank notepad is by the phone. _
+         The desk has a pigeonhole and one drawer on it.", 5,0,0,1),
+    obj("notepad", "Although the notepad is blank, you can see the _
+         indentation of writing on it.", 5,0,0,1),
+    obj("drawer", "This is a standard pull desk drawer.", 5,0,0,4),
+    obj("pigeonhole", "The pigeonhole has a paid bill in it.",5,0,0,4),
+    obj("bill","The bill is from the telephone company.",5,0,0,1),
+    obj("phone","This is a beige pushbutton desk phone.",5,25,0,4),
+    obj("number","The telephone number is printed on the base",5,0,0,4),
+    obj("panel","The panels are tongue-in-groove. One of the panels _
+         seems more worn than the others", 5,0,0,4),
+    obj("shelves","There are software programs, manuals, and blank _
+         disks on the shelves.",6,0,0,4),
+    obj("program","One program is for communicating with the U.S. _
+         defense department's mainframe computer.", 6,0,10,5),
+    obj("phone","This is a standard desk-type dial telephone. _
+         The receiver is set into a modem.",6,30,0,4),
+    obj("number","The telephone number is printed on the base",6,0,0,1),
+    obj("computer","this is a standard office computer with a keyboard.\n_
+         A cd is inserted into one of the drives. The power switch is off.",
+         6,0,0,5),
+    obj("monitor","This is a high resolution LCD monitor. _
+         The power switch is off.",6,0,0,5),
+    obj("modem","The modem is one that can use an automatic dialing\n_
+         communications program. The power switch is off.", 6,0,0,5),
+    obj("tray","the silver tray holds a decanter partially filled with _
+         claret.", 7,0,0,1),
+    obj("decanter","the decanter is of etched crystal. it probably holds _
+         some claret.", 7,0,0,1),
+    obj("claret", "An amber liquid", 7,0,0,1),
+    obj("cabinet", "this is a fairly standard kitchen cabinet.",8,0,0,4),
+    obj("bottle","a bottle of capsules are here.",8,39,0,2),
+    obj("capsule","the capsules are elongated and have a slight aroma _
+         of burnt almonds.",8,0,0,1),
+    obj("table","the bedside table has a phone on it. _
+         a piece of paper and a lamp are here.", 9,0,0,3),
+    obj("phone","there is a number printed on the phone.", 9,0,0,4),
+    obj("paper","a piece of monogrammed writing paper",9,43,0,1),
+    obj("combination","there is a combination written on it",9,0,0,4),
+    obj("safe","this is a standard combination safe.",9,0,0,4),
+    obj("gum","a pack of stick-type peppermint gum. _
+         each stick is wrapped in paper.", 9,0,0,2),
+    obj("microfilm","the microfilm has been developed but you can't _
+         see it without special equipment. Nevertheless it's pretty _
+         certain what you have found.",9,0,10,2),
+    obj("shelves","a very sophisticated camera is on one of the shelves.",
+         10,0,0,4),
+    obj("camera","This camera is used to transfer documents to microfilm.",
+         10,0,10,1),
+    obj("cabinet","this is a large mirrored bathroom cabinet.", 10,0,0,4),
+    obj("bureau","a wall safe is set into the wall above the low _
+         mahogony carved bureau.", 9,0,0,3),
+    obj("bottles","bottles of fixer and photoflo are on the shelves.",
+         10,52,0,2),
+    obj("tank","there is a film developing tank and a film apron _
+         and tank cover here too.", 10,0,0,2),
+    obj("headquarters","headquarters",100,0,0,4),
+    obj("capsules","the capsules are elongated and have a slight aroma _
+         of burnt almonds.",8,0,0,1),
+    obj("sideboard","a large ornate sideboard with a beveled glass mirror _
+         dominates the east wall.", 7,34,0,4),
+    obj("number","there is a number printed on the phone.", 9,0,0,1),
+    obj("paper","the numbers 2-4-8 are written on a piece of paper _
+         on the top of the drawer.", 5,0,0,2),
+    obj("griminski","the white-haired man is dressed in evening clothes.",
+         6,0,0,4),
+    obj("corner","you are looking at the corner of the closet.",
+         4,17,0,4)
 
   ]
 
@@ -109,17 +201,52 @@ procedure init()
     room("You are in your office at the CIA.\n_
           On the shelves are tools you've used in past missions.\n_
           Ambassador Griminski's apartment is North.",
-          "You'll need some tools to get into the apartment.", 2,0,0,0),
+            "You'll need some tools to get into the apartment.", 2,0,0,0),
 
     room("You are at 14 Parkside Avenue. The entrance to ambassador\n_
           Griminski's small but elegant bachelor apartment. You see a \n_
           heavy wooden door with a notice on it warning of an alarm system.",
-          "Maybe your tools will help you.", 0,0,1,0),
+            "Maybe your tools will help you.", 0,0,1,0),
 
     room("This is the marbled foyer of the ambassador's apartment. \n_
           A table is in the corner. The master bedroom is east, the drawing \n_
           room is north, and a closet west. A fierce dog charges to attack.",
-          "Something from your office could be helpful now.", 0,0,2,0)
+            "Something from your office could be helpful now.", 0,0,2,0),
+
+    room("You are in the front hall cedar closet. Heavy overcoats and a \n_
+          trenchcoat are hanging up. Boots are on the floor and other items \n_
+          are in the corner.",
+            "First impressions can be deceiving.", 0,3,0,0),
+
+    room("You are in the drawing room. A desk is here. A sofa and a\n_
+          coffee table are in front of the fireplace set into the paneled \n_
+          east wall. The dining room is north.",
+            "There is more here than meets the eye.", 7,0,3,0),
+
+    room("You can see a microcomputer, monitor, and a cable modem \n_
+          on a table against the east wall of this over-sized closet. A phone is by_
+          the computer. A chair and shelves are here.",
+            "Running a program is always interesting.", 0,0,0,5),
+
+    room("You are standing in a small formal dining room. The table \n_
+          seats six guests. A sideboard with a tray on it is against the east\n_
+          wall. The kitchen is to the north.",
+            "I can't help you here", 8,0,5,0),
+
+    room("You are in the apartment kitchen which shimmers with\n_
+          polished chrome appliances and butcherblock counters. A long\n_
+          cabinet above the stainless steel sinks is closed.",
+            "Be suspicious of items in small bottles.", 0,0,7,0),
+
+    room("This is ambassador Griminsky's bedroom. A bed and bedside\n_
+          table are here. A safe is in the wall above the bureau. The\n_
+          bathroom and dressing area are to the north.",
+            "Things are often not what they seem.", 10,0,0,3),
+
+    room("You are in a combined bathroom / dressing area. The\n_
+          ambassador's clothes are hanging neatly on rods and open shelves\n_
+          hold towels and sweaters. The medicine cabinet is closed.",
+            "Don't overlook the obvious.", 0,0,9,0)
 
   ]
 
@@ -127,4 +254,565 @@ procedure init()
                  "drop","call","unscrew","spray","push","load","run","drink",
                  "eat","chew","unwrap","talk","shoot","unlock","on","off" ])
 
+end
+
+procedure command()
+
+  case rs of {
+    "help": help()
+    "quit": quit()
+    "inventory": inventory()
+    "look": look()
+    "time": printtime()
+    "score": printscore()
+    "restart": restart()
+    default: write("I can't understand ", rs)
+  }
+
+end
+
+procedure action()
+
+  if ob[n].t ~= 2 then {
+
+    case vs of {
+      "look": verblook()
+      "take"|"get": takeget()
+      "go"|"crawl"|"walk": go()
+      "open": verbopen()
+      "read": verbread()
+      "drop": drop()
+      "call": call()
+      "unscrew": unscrew()
+      "spray": spray()
+      "push": verbpush()
+      "load": verbload()
+      "run": verbrun()
+      "drink": drink()
+      "eat"|"chew": cheweat()
+      "unwrap": unwrap()
+      "talk": talk()
+      "shoot": shoot()
+      "unlock": unlock()
+      "on": onoff("on")
+      "off": onoff("off")
+      default: write("invalid verb ", v)
+    }
+
+  } else {
+    write("You can't ",vs," ",ns," yet.")
+  }
+
+end
+
+procedure verblook()
+  write(ob[n].ds)
+  repeat {
+    if ob[n].l = 0 then {
+      return
+    } else {
+      n := ob[n].l
+      if ob[n].m = r then
+        write(ob[n].ds)
+    }
+  }
+end
+
+procedure takeget()
+  k := ob[n].t
+  case k of {
+    1: {
+      if *ca < 6 then
+        takeit()
+      else
+        write("you can't carry anything else") }
+    2: { write("you can't take ", n, " yet"); return }
+    3: { write("silly, that's too heavy to carry"); return }
+    4: { write("that's ridiculous!"); return }
+    5: { write("you can't take ", n, " yet"); return }
+    default: {
+      write("invalid take code for object ", ob[n].as,ob[n].t)
+      return
+    }
+  }
+end
+
+procedure takeit()
+  if ob[n].m = 100 then {
+    write("you already have it")
+    return
+  } else {
+    write("taken.")
+    ob[n].m := 100
+    put(ca, n)
+  }
+end
+
+procedure verbopen()
+
+  case ns of {
+
+    "door": {
+      if ob[12].t = 4 & ob[13].t = 4 then {
+        write("opened")
+        rooms[2].e[1] := 3
+      } else if ob[12].t = 5 then {
+        write("the door is locked.")
+      } else if ob[13].t = 5 then {
+        stop("You didn't disconnect the alarm. It goes off and the\n",
+             "police come and arrest you. Game over.")
+      } else {
+        write("can't get through door yet")
+      }
+    }
+
+    "briefcase": {
+      write("combination ")
+      cs := read()
+      if cs == "2-4-8" then {
+        write("opened")
+        ob[18].ds ||:="parts of an rr-13 rifle are inside the padded case."
+      } else {
+        write("sorry you don't have the right combination")
+      }
+    }
+
+    "safe": {
+      write("combination ")
+      cs := read()
+      if cs == "20-15-9" then {
+        write("opened")
+        ob[44].l := 45
+        ob[45].t := 1
+        ob[44].ds ||:= "   inside is"
+      } else {
+        write("sorry you don't have the right combination")
+      }
+    }
+
+    "cabinet": {
+      write("opened")
+      if n = 49 then {
+        ob[51].t := 1
+        ob[49].l := 51
+        rooms[10].ds ||:= " open"
+      } else {
+        ob[38].t := 1
+        ob[37].l := 38
+        rooms[8].ds ||:= " open"
+      }
+    }
+
+    "umbrella": {
+      stop("you stab yourself with the tip, which is a poisoned dart.\n",
+           "you are rushed to the hospital, but it is no use.\n",
+           "Game over.")
+    }
+
+    "drawer": {
+      write("opened")
+      ob[21].l := 57
+      ob[57].t := 1
+    }
+
+    default: {
+      write("A ", ns, " can't be opened.")
+    }
+
+  }
+
+end
+
+procedure verbread()
+
+  case n of {
+
+    (r = 3) & 16: {
+      write("The telephone bill is made out to 322-9678 -V.Grim, P.O. X\n",
+      "Grand Central Station, NYC\n", "The amount is $247.36 _
+      for long distance charges to Washington DC")
+      return
+    }
+
+    20: {
+      write("You can just make out this message: HEL-ZXT.93.ZARF.1")
+      return
+    }
+
+    23: {
+      write("The bill is made out to 322-8721, Dr. Vladimir Griminski",
+            "14 Parkside Avenue - NYC.\n",
+            "The bill is for $68.34 for mostly local calls.")
+    }
+
+    25: write("322-8721")
+
+    30: write("322-9678")
+
+    42: write("20-15-9")
+
+    56: write("322-8721")
+
+    default: write("There is nothing to read.")
+
+  }
+
+end
+
+procedure drop()
+  every i := 1 to *ca do {
+    if n = ca[i] then {
+      ob[ca[i]].m := r
+      delete(ca, i)
+      write("dropped")
+      return
+    }
+  }
+  write("You aren't carrying a ", ns)
+end
+
+procedure call()
+
+  if n = 53 & (r = (5 | 6 | 9)) then {
+
+    write("Ring...ring")
+    write("Hello, agent.  This is your control speaking.")
+    write("List your tangible evidence.")
+    ll := 0
+    li := []
+
+    if get_evidence() >= 40 then {
+
+      write("Fantastic job!!")
+      write("We'll be over in a flash to arrest the suspect!")
+      tt +:= 6
+
+      if tt > maxtime then {
+        stop("sorry... you ran out of time")
+      } else {
+        write(" -----------------")
+        write("Ambassador Griminski arrives home at 10:30 to find\n",
+              "operatives waiting to arrest him.")
+        write(" -----------------")
+        write("You are handsomely rewarded for your clever sleuthing.")
+        write("You solved the mystery in ", tt, " minutes")
+        exit()
+      }
+
+    }
+
+  } else if n ~= 53 then {
+    write("It's no use to call ", ns)
+  } else {
+    write("You are not near a phone")
+  }
+
+end
+
+procedure get_evidence()
+
+  local ev := 0
+  repeat {
+
+    rs := read()
+
+    if rs == "" then {
+      return ev
+    } else {
+
+      every i := 1 to *ca do {
+        if rs == ob[ca[i]].as then {
+          if !li = ca[i] then {
+            write("You already said ", rs)
+            break next
+          }
+          ev +:=ob[ca[i]].v
+          put(li, ca[i])
+          break next
+        }
+      }
+
+    }
+    write("You're not carrying a ", rs)
+  }
+
+end
+
+procedure unscrew()
+  if n = 13 then {
+    if ob[!ca].as=="screwdriver" then {
+      write("The alarm system is off.")
+      ob[13].t := 4
+      ob[13].ds := "The alarm system is disabled."
+      return
+    }
+    write("You have nothing to unscrew with")
+  } else {
+    write("You can't unscrew a ", ns)
+  }
+end
+
+
+procedure spray()
+  if n = (13|10) then {
+    if !ca = 10 then {
+      write("The dog is drugged and falls harmlessly at your feet.")
+      rooms[3].e[1] := 5
+      rooms[3].e[2] := 9
+      rooms[3].e[4] := 4
+      rooms[3].ds[-31:0] := " The drugged dog is on the floor."
+      ob[14].ds := "The fierce doberman is drugged on the floor."
+      delete(ca, i)
+      write("The drug is used up and is no longer in your inventory.")
+      return
+    } else {
+      write("you have nothing to spray with")
+    }
+  } else {
+    write("you can't spray a ", ns)
+  }
+end
+
+procedure verbpush()
+  if n = 26 then {
+    write("The panel pops open to reveal the presence of a \n",
+          "previously hidden room.")
+    rooms[5].e[2] := 6
+    ob[26].ds ||:= "A hidden room can be seen behind one panel."
+  } else {
+    write("It doesn't do any good to push a ", ns)
+  }
+end
+
+procedure verbload()
+  if n = 28 then {
+    if ob[28].m = 6 then {
+      write("The program is already loaded.")
+    } else {
+      write("That won't help you.")
+    }
+  } else {
+    write("can't load a ", ns)
+  }
+end
+
+procedure verbrun()
+
+   if n = 28 then {
+
+    if ob[31 | 32 | 33].t = 5 then {
+      write("The computer can't run the program yet.")
+      return
+    }
+
+    ob[28].t := 1
+    write("The program dials a Washington D.C. number.\n",
+          "A message appears on the monitor.\n")
+    writes("PLEASE LOG IN: ")
+    cs := read()
+
+    if cs == "HEL-ZXT.93.ZARF.1" then {
+
+      write("The following message appears on the monitor.\n")
+      write("  WELCOME TO THE U. S. DEPARTMENT OF DEFENSE")
+      write("     RADAR RESISTANT AIRCRAFT PROGRAM.")
+      write("ALL INFORMATION ON THIS SYSTEM")
+      write("IS CLASSIFIED TOP SECRET.")
+
+    } else if g = 0 then {
+
+      g := 2
+      write("\n\nINVALID LOGON CODE\n\n")
+      write("The screen goes blank. You hear footsteps.\n",
+            "Griminski looms in the doorway with an 8mm Luger in hand.")
+      write("You'd better have the PPK-3 pistol or you're doomed.")
+      input()
+
+      if b~= 0 then {
+        parsing()
+        if vs == "shoot" & (n=(8 | 58)) then {
+          if shoot(1) === "return" then {
+            return
+          }
+        }
+      }
+
+      write("It's hopeless! Griminski fires....")
+      stop("You crumple to the floor.  End of game.")
+
+    } else {
+      write("INVALID LOGON CODE")
+    }
+
+  } else {
+    write("you can't run a ", ns)
+  }
+
+end
+
+procedure drink()
+  if n = 36 then {
+    write("You are poisoned.")
+    stop("You stagger to the phone and call the ambulance. Game over.")
+  } else {
+    write("You can't drink ", ns)
+  }
+end
+
+procedure cheweat()
+  if n = (39 | 54) then {
+    write("You fool! These are cyanide capsules.")
+    stop("You fall to the floor and die in agony.  Game over.")
+  } else if n = 45 then {
+    write("You idiot! The gum is a plastic explosive.")
+    stop("You have just blown yourself to smithereens. Game over.")
+  } else {
+    write("You can't ", vs, " ", ns)
+  }
+end
+
+procedure unwrap()
+  if n = 45 then {
+    write("The wrapper conceals a tiny strip of microfilm.")
+    ob[46].t := 1
+  } else {
+    write("It doesn't help to unwrap ", ns)
+  }
+end
+
+procedure talk()
+  if n = 14 then {
+    write("He doesn't speak English.")
+  } else {
+    write("That won't help you.")
+  }
+end
+
+procedure shoot(x)
+
+  if \x | (n=(8 | 14 | 58)) then {
+
+    every i := 1 to *ca do {
+
+      if ca[i] = 8 then {
+        if r = 3 & n = (8 | 14) then {
+          write("The dog bites your hand.")
+          return
+        } else if r ~= 6 then {
+          write("That just makes a big mess.")
+          return
+        } else if g ~= 2 then {
+          write("That won't help.")
+          return
+        } else {
+          write("Your shot grazes his forehead. He crashes to the floor")
+          write("You have time to gather more evidence to apprehend him.")
+          g := 1
+          rooms[6].ds ||:=" Griminski is lying unconscious on the floor."
+        }
+      }
+
+    }
+
+    if (r = 6) & (g = 2) then {
+      write("You don't have the pistol. Anything else is too slow.")
+    } else {
+      write("You have nothing to shoot with.")
+    }
+
+    fail
+
+  } else {
+    write("That won't help")
+  }
+end
+
+procedure unlock()
+  if n = 12 then {
+    if ob[!ca].as == "key" then {
+      write("Unlocked.")
+      ob[12].t := 4
+      return
+    } else {
+      write("You have nothing to use to unlock.")
+    }
+  } else {
+    write("You can't ", vs, " a ", ns)
+  }
+end
+
+procedure onoff(o)
+
+  case n of {
+    31: m := 137
+    32: m := 57
+    33: m := 111
+    default: { write("You can't turn ", o, " a ", ns); fail }
+  }
+
+  if ob[n].ds[-3:0] == ("off"|" on") then {
+    while ob[n].ds[-1] ~== "o" do { ob[n].ds[-1] := "" }
+    ob[n].ds[-1] := ""
+  }
+
+  ob[n].ds ||:= " " || o
+  write(o, ".")
+
+  ob[n].t := if o == "on" then 3 else 5
+
+end
+
+procedure help()
+  write(rooms[r].hs)
+end
+
+procedure quit()
+
+  write("Are you sure you want to quit? (yes/no)")
+  rs := read()
+
+  if rs == "no" then
+    return
+  else {
+    printtime()
+    printscore()
+    stop()
+  }
+
+end
+
+procedure inventory()
+
+  if *ca = 0 then {
+    write("You aren't carrying anything")
+    return
+  } else {
+    write("You have")
+    every write(ob[!ca].as)
+  }
+
+end
+
+procedure look()
+  write(rooms[r].ds)
+end
+
+procedure printtime()
+  write("Elapsed time is ",tt," minutes.")
+end
+
+procedure printscore()
+  s := 0
+  every s +:= ob[!ca].v
+  write("You have ",s," points for evidence.")
+end
+
+procedure restart()
+  writes("Are you sure you want to restart? ")
+  if read() == "yes" then {
+    main()
+    stop()
+  } else {
+    write("Since you don't want to restart... ")
+  }
 end

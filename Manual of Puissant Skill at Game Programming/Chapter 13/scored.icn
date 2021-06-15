@@ -1,0 +1,27 @@
+
+# Server
+
+# Compile highscore.icn to ucode file with -c option
+link highscore
+procedure main(av)
+
+  port := 4578
+
+  if av[i := 1 to *av] == "-port" then {
+    port := integer(av[i+1])
+  }
+
+  write("Internet Scorecard version 1.0")
+
+  while net := open(":" || port, "na")  do {
+    score_result(net)
+    close(net)
+  }
+
+  (&errno = 0) |
+  stop("scored net accept failed: ", &errortext)
+
+end
+
+procedure score_result(net)
+end

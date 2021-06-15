@@ -1,0 +1,23 @@
+
+# Client
+
+# unicon -c highscore.icn
+procedure highscore(game,userid,score,server)
+
+  if not find(":", server) then {
+    server ||:= ":4578"
+  }
+
+  f := open(server, "n") | fail
+
+  write(f, "HSP\n", game, "\n", userid, "\n", score) |
+  stop("Couldn't write: ", &errortext)
+
+  L := ["High Scores"]
+
+  while line := read(f) do { put(L, line) }
+  close(f)
+
+  return L
+
+end
