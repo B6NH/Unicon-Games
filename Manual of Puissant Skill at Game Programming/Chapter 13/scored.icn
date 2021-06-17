@@ -1,27 +1,96 @@
 
 # Server
 
-# Compile highscore.icn to ucode file with -c option
-link highscore
 procedure main(av)
 
+  # Default port
   port := 4578
 
+  # Specify port: "scored -port 27182"
   if av[i := 1 to *av] == "-port" then {
     port := integer(av[i+1])
   }
 
   write("Internet Scorecard version 1.0")
 
+  # Accept connection requests endlessly
   while net := open(":" || port, "na")  do {
     score_result(net)
     close(net)
   }
 
-  (&errno = 0) |
-  stop("scored net accept failed: ", &errortext)
+  (&errno = 0) | stop("scored net accept failed: ", &errortext)
 
 end
 
 procedure score_result(net)
+
+  static t
+  initial t := table()
+  gameNameChars := &letters ++ &digits ++ '-_'
+
+  # Receive data within 1000 milliseconds
+  select(net, 1000) | { write(net, "timeout"); fail }
+
+  # Read and check protocol
+  read(net) == "HSP" | { write(net, "wrong protocol"); fail }
+
+  # Read game
+  game := read(net) | { write(net,"no game?"); fail }
+
+  # Check game name characters
+  (game ++ gameNameChars) === gameNameChars | { fail }
+
+  # Read owner
+  owner := read(net) | { write(net,"no owner?"); fail }
+
+  # Read score
+  score := numeric(read(net)) | { write("no score?"); fail }
+
+  # Check if game is in ram
+  if t[game] === &null then {
+
+    if not (f := open(game)) then {
+      write(net, "No high scores here for ", game)
+      fail
+    }
+
+    # Load scores from file to ram
+    t[game] := L := []
+    while put(L, read(f))
+    close(f)
+
+  } else {
+
+    # Load scores from memory
+    L := t[game]
+
+  }
+
+  # If score is better than last
+  # score put it in the right place
+  if score > L[-1] then {
+
+    # Replace last score
+    L[-2] := owner
+    L[-1] := score
+    i := -1
+
+    # Swap name/score pair until better entry is found
+    while L[i] > L[i-2] do {
+      L[i] :=: L[i-2]
+      L[i-1] :=: L[i-3]
+      i -:= 2
+    }
+
+    # Write new scores to file
+    f := open(game,"w")
+    every write(f, !L)
+    close(f)
+
+  }
+
+  # Show highscore from ram
+  every write(net, !L)
+
 end
