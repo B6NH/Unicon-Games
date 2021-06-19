@@ -3,7 +3,7 @@
 
 global side, halfSide, radius
 
-procedure main()
+procedure main(argv)
 
   local board, color
 
@@ -48,19 +48,24 @@ procedure play(board)
     repeat {
 
       # Get player input
-      write(turn,"'s turn, move in row,col,...row,col format:")
-      input := read()
 
-      # Add numbers to list
-      L := []
-      input ? while put(L,integer(tab(many(&digits)))) do =","
+      write(turn,"'s turn, click on initial position")
+
+      while Event() ~= &lrelease
+
+      L := [&y/side+1,&x/side+1]
+
+      write("Click on target position")
+
+      while Event() ~= &lrelease
+
+      put(L,&y/side+1)
+      put(L,&x/side+1)
 
       # Invalid initial position
       if not find(turn,board[L[1],L[2]]) then {
-
         write("Requested move is illegal, try again.")
         next
-
       }
 
       # Check targets
@@ -205,45 +210,88 @@ procedure nextTurn(turn)
   return if turn == "red" then "blue" else "red"
 end
 
-procedure animateMove(start,target,turn)
+procedure prepareAnimation(start, target, turn)
 
-  speed := 3
+  speed := 22
 
   # Center of current square
-  currentPos := calculatePosition(start[1],start[2])
+  currentPos := calculateCirclePosition(start[1],start[2])
 
   # Center of target square
-  targetPos := calculatePosition(target[1],target[2])
+  targetPos := calculateCirclePosition(target[1],target[2])
 
-  # Calculate unit vector
-  vector := subVectors(targetPos,currentPos)
-  magnitude := sqrt(vector[1]^2+vector[2]^2)
-  unit := [vector[1]/magnitude,vector[2]/magnitude]
+  # Calculate final vector by scaling unit vector with speed
+  vec := scaleVector(unitVector(subVectors(targetPos,currentPos)),speed)
+
+  # Row/Col components
+  modRow := if vec[1] < 0 then -1 else 1
+  modCol := if vec[2] < 0 then -1 else 1
+
+  row := start[1] ; col := start[2]
+  whiteLines := [] ; middleLine := []
+
+  limit := abs(start[1]-target[1]) + 1
+
+  # Collect square positions along path
+  # Redraw them at each step
+  every i := 1 to limit do {
+    put(middleLine,calculateSquarePosition(row,col))
+    if i ~= limit then {
+      put(whiteLines,calculateSquarePosition(row,col+modCol))
+      put(whiteLines,calculateSquarePosition(row+modRow,col))
+    }
+    row +:= modRow ; col +:= modCol
+  }
 
   checkCondition := if turn == "blue" then checkBlue else checkRed
 
-  while checkCondition(currentPos,targetPos) do {
+  currentPos := addVectors(currentPos,vec)
 
-    write(currentPos[1],",",currentPos[2])
+  T := table()
+  T["currentPos"] := currentPos
+  T["targetPos"] := targetPos
+  T["middleLine"] := middleLine
+  T["whiteLines"] := whiteLines
+  T["vector"] := vec
+  T["checkCondition"] := checkCondition
 
+  return T
+
+end
+
+procedure animateMove(start,target,turn)
+
+  t := prepareAnimation(start,target,turn)
+
+  # Run animation
+  while t["checkCondition"](t["currentPos"],t["targetPos"]) do {
+
+    # Draw green path
     Fg("green")
-
-    # Draw background
-    FillRectangle(currentPos[2]-halfSide,currentPos[1]-halfSide,side,side)
-
-    Fg(turn)
-
-    # Draw pawn
-    FillCircle(currentPos[2],currentPos[1],radius)
+    every square := !t["middleLine"] do { FillRectangle(square[2],square[1],side,side) }
 
     WSync()
 
-    currentPos[1] +:= unit[1]*speed
-    currentPos[2] +:= unit[2]*speed
+    # Draw white paths
+    Fg("white")
+    every square := !t["whiteLines"] do { FillRectangle(square[2],square[1],side,side) }
+
+    # Draw pawn
+    Fg(turn)
+    FillCircle(t["currentPos"][2],t["currentPos"][1],radius)
+
+    WSync()
+
+    t["currentPos"] := addVectors(t["currentPos"],t["vector"])
 
     delay(50)
 
   }
+
+  Fg("green")
+  FillRectangle(t["targetPos"][2]-halfSide,t["targetPos"][1]-halfSide,side,side)
+  Fg(turn)
+  FillCircle(t["targetPos"][2],t["targetPos"][1],radius)
 
 end
 
@@ -261,21 +309,296 @@ procedure countPixels(rowOrCol)
   return (rowOrCol - 1) * side
 end
 
-procedure calculatePosition(row,col)
+procedure calculateSquarePosition(row,col)
+  return [countPixels(row),countPixels(col)]
+end
+
+procedure calculateCirclePosition(row,col)
   return [countPixels(row) + halfSide,countPixels(col) + halfSide]
 end
 
 procedure subVectors(a,b)
-  return [a[1] - b[1], a[2] - b[2]]
+  return [a[1]-b[1],a[2]-b[2]]
+end
+
+procedure addVectors(a,b)
+  return [a[1]+b[1],a[2]+b[2]]
+end
+
+procedure scaleVector(v,s)
+  return [v[1]*s,v[2]*s]
+end
+
+procedure unitVector(vector)
+  magnitude := sqrt(vector[1]^2+vector[2]^2)
+  return [vector[1]/magnitude,vector[2]/magnitude]
 end
 
 procedure drawCircle(i,j,color)
 
   local pos
 
-  pos := calculatePosition(i,j)
+  pos := calculateCirclePosition(i,j)
 
   Fg(color)
   FillCircle(pos[2],pos[1],radius)
+
+end
+
+class GameState(player,turn)
+
+  # Assessment
+  abstract method evaluate()
+
+  # Check if position is terminal
+  abstract method finished()
+
+  # Generate all possible moves for current state
+  abstract method generate_moves()
+
+  # Create physical copy of game state
+  abstract method copy()
+
+  # Render game state visually
+  abstract method draw_board()
+
+  method minimax(depth,player)
+
+    local alpha
+    /player := turn
+
+    if (depth = 0) | finished() then {
+      ev := evaluate()
+      if ev === &null then {
+        stop("evaluate() returned null for preceding board")
+      } else {
+        return ev
+      }
+    } else if player == turn then {
+      every childmove := generate_moves(node) do {
+        child := copy()
+        child.apply_move(childmove)
+        kidval := child.minimax(depth-1,player)
+        if not (/alpha := kidval) then {
+          alpha <:= kidval
+        }
+      }
+    } else {
+      every childmove := generate_moves(node) do {
+        child := copy()
+        child.apply_move(childmove)
+        kidval := -child.minimax(depth-1,player)
+        if not (/alpha := kidval) then {
+          alpha >:= kidval
+        }
+      }
+    }
+
+    return \alpha | 0
+
+  end
+
+  method advance_turn()
+    if turn == player[i := 1 to *player] then {
+      i +:= 1
+      if i > *player then { i := 1 }
+      turn := player [i]
+    } else {
+      stop("No player named ",image(turn))
+    }
+  end
+
+end
+
+class CheckersGameState : GameState(square,mydepth)
+
+  method apply_move(L)
+    i := 0
+    while i+4 < *L do {
+      srcrow := L[i+1]; srccol := L[i+2]
+      destrow := L[i+3]; destcol:=L[i+4]
+      square[srcrow,srccol] :=: square[destrow, destcol]
+      if abs(srcrow-destrow)=2 then {
+        square[(srcrow+destrow)/2,(srccol+destcol)/2] := " "
+      }
+      i +:= 2
+    }
+  end
+
+  method evaluate()
+
+    local dir
+    if turn=="red" then dir := 1 else dir := -1
+    points := 0
+
+    every row := 1 to 8 do {
+      every col := 1 to 8 do {
+        if square[row,col] == " " then {
+          next
+        } else if find(turn,square[row,col]) then {
+          sgn := 1
+        } else {
+          sgn := -1
+        }
+        points +:= 1000 * sgn
+        if find("queen", square[row,col]) then {
+          points +:= 10000*sgn
+        } else {
+          points -:= sgn * 2 ^ (if dir=-1 then row else (8-row))
+        }
+      }
+    }
+
+    return points
+
+  end
+
+  method generate_moves()
+
+    # Positions of player pieces
+    every row := 1 to 8 & col := 1 to 8 & match(turn,square[row,col]) do {
+
+      if turn=="red" then dir := 1 else dir := -1
+
+      # Regular move
+      every square[row+dir,(c := ((col-1)|col+1))]== " " do {
+        suspend [row,col,row+dir,c]
+      }
+
+      # Jump
+      every (csgn := (1|-1)) &
+            (square[row+dir*2, col+csgn*2]== " ") &
+            enemy_in(row+dir,col+csgn) do {
+
+        L := [row,col,row+dir*2, col+2*csgn]
+        suspend L
+        suspend generate_jumps(L)
+
+      }
+
+      # Queen move
+      every (dir := (1|-1)) & (csgn := (1|-1)) do {
+
+        if square[row+dir,col+csgn] == " " then {
+          suspend [row,col,row+dir,col+csgn]
+        }
+
+        if square[row+dir*2,col+csgn*2] == " " &
+           enemy_in(row+dir, col+csgn) then {
+
+          L := [row,col,row+dir,col+csgn]
+          suspend L
+          suspend generate_jumps(L)
+
+        }
+
+      }
+
+    }
+
+  end
+
+  method enemy_in(row,column)
+    if (row|column) = 0 then {
+      fail
+    } else {
+      s := square[row,column]
+      return not (s == (" " | turn))
+    }
+  end
+
+  method generate_jumps(L)
+
+    local dir
+    if turn=="red" then dir := 1 else dir := -1
+    row := L[-2] ; col := L[-1]
+
+    every (rsgn := (dir | (if find("queen",square[row,col]) then -dir))) &
+          (csgn := (1|-1)) &
+          (square[row+rsgn*2, col+2*csgn]==" ") &
+          enemy_in(row+rsgn, col+csgn) do {
+
+      L2 := L ||| [row+rsgn*2, col+2*csgn]
+      suspend L2
+      suspend generate_jumps(L2)
+
+    }
+
+  end
+
+  method finished()
+    if not find(player[1], !!square) then return player[2]
+    if not find(player[2], !!square) then return player[1]
+  end
+
+  method draw_board()
+
+    local i, j
+
+    write("(draw board ",image(square),")")
+    write("   \\ 1 2 3 4 5 6 7 8  column")
+    write("row -----------------")
+
+    every i := 1 to 8 do {
+      writes(" ",i,"  ")
+      every j := 1 to 8 do {
+        if find("queen", square[i,j]) then {
+          writes("|",map(square[i,j,1],&lcase,&ucase))
+        } else {
+          writes("|",square[i,j,1])
+        }
+      }
+      write("|\n    -----------------")
+    }
+
+  end
+
+  method computermove()
+
+    list_of_possible := []
+    t1 := &time
+
+    every possible := generate_moves() do {
+
+      put(list_of_possible, possible)
+      mv := copy()
+      mv.apply_move(possible)
+      thepoints := mv.minimax(mydepth)
+      mv.draw_board()
+
+      if /bestpoints | thepoints>bestpoints then {
+
+        bestpoints := thepoints
+        bestmove := possible
+        list_of_possible := [possible]
+
+      } else if thepoints=bestpoints then {
+        put(list_of_possible, possible)
+      }
+
+    }
+
+     if *list_of_possible = 0 then { stop("No possible moves") }
+
+     possible := ?list_of_possible
+     t2 := &time
+
+     if t2-t1 < 1000 then {
+       delay(1000-(t2-t1))
+       mydepth +:= 1
+     } else {
+       mydepth -:= 1
+     }
+
+     return possible
+
+  end
+
+  initially
+    mydepth := 1
+    player := ["blue", "red"]
+    human := p
+    turn := "blue"
+    # Initialize square[]
 
 end
