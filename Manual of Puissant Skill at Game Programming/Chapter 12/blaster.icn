@@ -1,0 +1,7 @@
+
+# Blasteroids
+
+# Compile with files: aboutbox.icn, game.icn, optionsdialog.icn
+procedure main()
+  write("Blasteroids")
+end

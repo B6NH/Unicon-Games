@@ -1,0 +1,9 @@
+
+# Sesrit
+
+link graphics
+link random
+#link highscor
+procedure main()
+  write("Sesrit")
+end
