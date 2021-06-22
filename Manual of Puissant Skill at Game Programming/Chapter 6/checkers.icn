@@ -3,38 +3,58 @@
 
 global side, halfSide, radius
 
+# Hot seat: no arguments
+# Minimax: blue/red
 procedure main(argv)
 
-  local board, color
+  local board, color, game
 
-  &window := open("Checkers","g","size=512,512")
+  # Hot seat
+  if 0 = *argv then {
 
-  side := 40
-  halfSide := side / 2
-  radius := 10
-  color := "green"
+    &window := open("Checkers","g","size=512,512")
+    color := "green"
 
-  every i := 1 to 8 do
-    every j := 1 + (i % 2) to 8 by 2 do {
+    # Global graphical variables
+    side := 40
+    halfSide := side / 2
+    radius := 10
 
-      Fg(color)
-      FillRectangle((j-1) * side,(i-1) * side,side,side)
+    every i := 1 to 8 do
+      every j := 1 + (i % 2) to 8 by 2 do {
 
-      if (1 <= i <= 3) then {
-        drawCircle(i,j,"red")
+        # Draw squares
+        Fg(color)
+        FillRectangle((j-1) * side,(i-1) * side,side,side)
+
+        # Draw pieces at starting positions
+        if (1 <= i <= 3) then { drawCircle(i,j,"red") }
+        else if (6 <= i <= 9) then { drawCircle(i,j,"blue") }
+
       }
-      else if (6 <= i <= 9) then {
-        drawCircle(i,j,"blue")
-      }
 
+    board := createBoard()
+
+    play(board)
+
+  # Minimax
+  } else {
+
+    game := CheckersGameState((argv[1]==("blue"|"red")) | "blue")
+
+    while not game.finished() do {
+      game.draw_board()
+      if not (L := game.get_move()) then { stop("Goodbye") }
+      if game.apply_move(L) then { game.advance_turn() }
     }
 
-  board := createBoard()
+    write((game.finished() || " wins") | "Game over, result a draw?")
 
-  play(board)
+  }
 
 end
 
+# Hot seat gameplay
 procedure play(board)
 
   local turn, input, L, r
@@ -48,12 +68,18 @@ procedure play(board)
     repeat {
 
       # Get player input
-
       write(turn,"'s turn, click on initial position")
 
       while Event() ~= &lrelease
 
+      # Get initial square
       L := [&y/side+1,&x/side+1]
+
+      # Invalid initial position
+      if not find(turn,board[L[1],L[2]]) then {
+        write("Requested move is illegal, try again.")
+        next
+      }
 
       write("Click on target position")
 
@@ -61,12 +87,6 @@ procedure play(board)
 
       put(L,&y/side+1)
       put(L,&x/side+1)
-
-      # Invalid initial position
-      if not find(turn,board[L[1],L[2]]) then {
-        write("Requested move is illegal, try again.")
-        next
-      }
 
       # Check targets
       every i := 3 to *L by 2 do {
@@ -148,7 +168,6 @@ procedure moveRegular(board,L,turn,row)
     board[L[row],L[row+1]] :=: board[L[row-2],L[row-1]]
     board[(L[row]+L[row-2])/2, (L[row+1]+L[row-1])/2] := " "
     animateMove([L[row-2], L[row-1]], [L[row],L[row+1]],turn)
-
     return "next"
 
   } else {
@@ -185,23 +204,21 @@ procedure isEmpty(board,i,j)
 end
 
 
+procedure drawTopBoard()
+  write("   \\ 1 2 3 4 5 6 7 8  column")
+  write("row -----------------")
+end
+
+
 procedure drawBoard(rows)
 
-  write("   \\ 1 2 3 4 5 6 7 8  column")
-
-  write("row -----------------")
+  drawTopBoard()
 
   every i := 1 to 8 do {
-
     writes(" ",i,"  ")
-
-    every j := 1 to 8 do
-      writes("|",rows[i,j,1])
-
+    every j := 1 to 8 do writes("|",rows[i,j,1])
     write("|")
-
     write("    -----------------")
-
   }
 
 end
@@ -367,6 +384,7 @@ class GameState(player,turn)
     local alpha
     /player := turn
 
+    # Evaluate at the bottom
     if (depth = 0) | finished() then {
       ev := evaluate()
       if ev === &null then {
@@ -374,6 +392,8 @@ class GameState(player,turn)
       } else {
         return ev
       }
+
+    # Maximize player chances
     } else if player == turn then {
       every childmove := generate_moves(node) do {
         child := copy()
@@ -383,6 +403,8 @@ class GameState(player,turn)
           alpha <:= kidval
         }
       }
+
+    # Minimize player chances
     } else {
       every childmove := generate_moves(node) do {
         child := copy()
@@ -410,19 +432,30 @@ class GameState(player,turn)
 
 end
 
-class CheckersGameState : GameState(square,mydepth)
+class CheckersGameState : GameState(square,mydepth,human)
 
   method apply_move(L)
+
     i := 0
-    while i+4 < *L do {
+
+    while i+4 <= *L do {
+
+      # Swap positions
       srcrow := L[i+1]; srccol := L[i+2]
-      destrow := L[i+3]; destcol:=L[i+4]
+      destrow := L[i+3]; destcol := L[i+4]
       square[srcrow,srccol] :=: square[destrow, destcol]
+
+      # Clear enemy position
       if abs(srcrow-destrow)=2 then {
         square[(srcrow+destrow)/2,(srccol+destcol)/2] := " "
       }
+
       i +:= 2
+
     }
+
+    return
+
   end
 
   method evaluate()
@@ -431,18 +464,32 @@ class CheckersGameState : GameState(square,mydepth)
     if turn=="red" then dir := 1 else dir := -1
     points := 0
 
+    # Go through all rows and cols
     every row := 1 to 8 do {
       every col := 1 to 8 do {
+
+        # No points for empty square
         if square[row,col] == " " then {
           next
+
+        # Add points for player
         } else if find(turn,square[row,col]) then {
           sgn := 1
+
+        # Subtract points for opponent
         } else {
           sgn := -1
         }
+
+        # Multiplier
         points +:= 1000 * sgn
+
+        # Add points for friendly queen
         if find("queen", square[row,col]) then {
           points +:= 10000*sgn
+
+        # Subtract normal pieces points
+        # proportional to promotion distance
         } else {
           points -:= sgn * 2 ^ (if dir=-1 then row else (8-row))
         }
@@ -536,8 +583,7 @@ class CheckersGameState : GameState(square,mydepth)
     local i, j
 
     write("(draw board ",image(square),")")
-    write("   \\ 1 2 3 4 5 6 7 8  column")
-    write("row -----------------")
+    drawTopBoard()
 
     every i := 1 to 8 do {
       writes(" ",i,"  ")
@@ -558,18 +604,19 @@ class CheckersGameState : GameState(square,mydepth)
     list_of_possible := []
     t1 := &time
 
+    # Generate possible moves
     every possible := generate_moves() do {
 
+      # Apply and rate move
       put(list_of_possible, possible)
       mv := copy()
       mv.apply_move(possible)
       thepoints := mv.minimax(mydepth)
-      mv.draw_board()
+      # mv.draw_board()
 
       if /bestpoints | thepoints>bestpoints then {
 
         bestpoints := thepoints
-        bestmove := possible
         list_of_possible := [possible]
 
       } else if thepoints=bestpoints then {
@@ -580,9 +627,11 @@ class CheckersGameState : GameState(square,mydepth)
 
      if *list_of_possible = 0 then { stop("No possible moves") }
 
+     # Choose random of best moves
      possible := ?list_of_possible
      t2 := &time
 
+     # Go deeper if enough time left
      if t2-t1 < 1000 then {
        delay(1000-(t2-t1))
        mydepth +:= 1
@@ -590,15 +639,50 @@ class CheckersGameState : GameState(square,mydepth)
        mydepth -:= 1
      }
 
+     # Return move
      return possible
 
   end
 
-  initially
+  method copy()
+    cp := CheckersGameState(turn)
+    every i := 1 to 8 do {
+      every j := 1 to 8 do {
+        cp.square[i][j] := square[i][j]
+      }
+    }
+    return cp
+  end
+
+  method get_move()
+
+    if (turn == human) then {
+
+      # Validate initial position
+      while {
+        write("Player move(row1,col2,row2,col2...):")
+        input := read() ; L := []
+        input ? while put(L, integer(tab(many(&digits)))) do =","
+        if not find(turn,square[L[1],L[2]]) then {
+          write("Requested move is illegal, try again.")
+          next
+        }
+        break
+      }
+
+      return L
+
+    } else {
+      return computermove()
+    }
+
+  end
+
+  initially(p)
     mydepth := 1
     player := ["blue", "red"]
     human := p
     turn := "blue"
-    # Initialize square[]
+    square := createBoard()
 
 end
