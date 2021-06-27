@@ -16,7 +16,8 @@ end
 # Starvation Percentage, Acres, Yield, Eaten,
 # Store, Random yearly yield modifier, Input,
 # Acres per person
-class Babylon(Z,D,D1,I,P,P1,A,Y,E,S,C,Q,L,H)
+class Babylon(year,deadTurn,deadTotal,immigrants,population,starvationPercentage,
+              acres,yield,eaten,store,yieldModifier,input,acresPerPerson,H)
 
   method play()
 
@@ -38,51 +39,51 @@ class Babylon(Z,D,D1,I,P,P1,A,Y,E,S,C,Q,L,H)
     write("\n\nHamurabi: I beg to report to you,")
 
     # Next year
-    Z +:= 1
+    year +:= 1
 
-    write("in year ",Z,", ", D, " people starved; ", I,
+    write("in year ",year,", ", deadTurn, " people starved; ", immigrants,
           " came to the city.")
 
     # Add immigrants to population
-    P +:= I
+    population +:= immigrants
 
     # Plague
-    if Q <= 0 then {
-      P /:= 2
+    if input <= 0 then {
+      population /:= 2
       write("A horrible plague struck! Half the people died.")
     }
 
-    write("Population is now ",P,". The city now owns ",
-           A, " acres.")
+    write("Population is now ",population,". The city now owns ",
+           acres, " acres.")
 
-    write("You harvested ",Y," bushels per acre. Rats ate ",
-           E, " bushels.")
+    write("You harvested ",yield," bushels per acre. Rats ate ",
+           eaten, " bushels.")
 
-    write("You now have ",S, " bushels in store.\n")
+    write("You now have ",store, " bushels in store.\n")
 
-    if Z == 11 then evaluate()
+    if year == 11 then evaluate()
 
   end
 
   method buy()
 
-    C := ?11-1
-    Y := C + 17
+    yieldModifier := ?11-1
+    yield := yieldModifier + 17
 
-    write("Land is trading at " , Y, " bushels per acre.")
+    write("Land is trading at " , yield, " bushels per acre.")
 
     repeat {
 
       writes("How many acres do you wish to buy? ")
 
-      Q := integer(read())
+      input := integer(read())
 
-      if Q < 0 then
+      if input < 0 then
         finish("quit")
-      else if Y * Q <= S then
+      else if yield * input <= store then
         return
       else {
-        write("Hamurabi: think again. You have only ",S)
+        write("Hamurabi: think again. You have only ",store)
         write(" bushels of grain. Now then,")
       }
 
@@ -92,27 +93,27 @@ class Babylon(Z,D,D1,I,P,P1,A,Y,E,S,C,Q,L,H)
 
   method sell()
 
-    if Q == 0 then {
+    if input == 0 then {
 
       repeat {
 
         writes("How many acres do you wish to sell?")
 
-        Q := integer(read())
+        input := integer(read())
 
-        if Q < 0 then
+        if input < 0 then
           finish("quit")
-        else if Q < A then {
-          A -:= Q; S +:= Y * Q; C := 0
+        else if input < acres then {
+          acres -:= input; store +:= yield * input; yieldModifier := 0
           write()
           break
         } else {
-          write("Hamurabi: think again. You own only ", A,
+          write("Hamurabi: think again. You own only ", acres,
                 " acres. Now then,")
         }
       }
     } else {
-      A +:= Q ; S -:= Y * Q; C := 0
+      acres +:= input ; store -:= yield * input; yieldModifier := 0
       write()
     }
 
@@ -124,24 +125,24 @@ class Babylon(Z,D,D1,I,P,P1,A,Y,E,S,C,Q,L,H)
 
       writes("How many bushels shall we feed your people? ")
 
-      Q := integer(read())
+      input := integer(read())
 
-      if Q < 0 then
+      if input < 0 then
         finish("quit")
       else {
 
-        if Q <= S then
+        if input <= store then
           break
         else {
 
           write("Hamurabi: think again. You have only")
-          write(S," bushels of grain. Now then,")
+          write(store," bushels of grain. Now then,")
 
         }
       }
 
-      S -:= Q
-      C := 1
+      store -:= input
+      yieldModifier := 1
       write()
 
     }
@@ -152,26 +153,26 @@ class Babylon(Z,D,D1,I,P,P1,A,Y,E,S,C,Q,L,H)
 
     repeat {
       writes("How many acres do you wish to plant? ")
-      D := integer(read())
-      if D == 0 then
+      deadTurn := integer(read())
+      if deadTurn == 0 then
         return
-      else if D < 0 then
+      else if deadTurn < 0 then
         finish("quit")
-      else if D <= A then {
+      else if deadTurn <= acres then {
 
-        if (D / 2) < S then {
+        if (deadTurn / 2) < store then {
 
-          if (D < (10 * P)) then {
-            S -:= D / 2
+          if (deadTurn < (10 * population)) then {
+            store -:= deadTurn / 2
             return
           } else {
-            write("but you have only ",P,
+            write("but you have only ",population,
                   " people to tend the fields. Now then,")
             next
           }
 
         } else {
-          write("Hamurabi: think again. You have only ",S,
+          write("Hamurabi: think again. You have only ",store,
                 " bushels of grain. Now then,")
           next
         }
@@ -179,7 +180,7 @@ class Babylon(Z,D,D1,I,P,P1,A,Y,E,S,C,Q,L,H)
         break
 
       } else {
-        write("Hamurabi: think again. You own only ",A,
+        write("Hamurabi: think again. You own only ",acres,
               " acres. Now then,")
       }
     }
@@ -188,32 +189,34 @@ class Babylon(Z,D,D1,I,P,P1,A,Y,E,S,C,Q,L,H)
 
   method harvest()
 
-    C := integer(?0 * 5 + 1)
-    Y := C ; H := D * Y; E := 0
-    C := integer(?0 * 5 + 1)
+    yieldModifier := integer(?0 * 5 + 1)
+    yield := yieldModifier ; H := deadTurn * yield; eaten := 0
+    yieldModifier := integer(?0 * 5 + 1)
 
     # Rats
-    if C % 2 = 0 then {
-      E := S / C
+    if yieldModifier % 2 = 0 then {
+      eaten := store / yieldModifier
     }
 
-    S := S - E + H
-    C := ?0 * 5 + 1
-    I := integer((C * (20 * A + S) / P / 100 + 1))
-    C := integer(Q / 20)
-    Q := integer(10 * (2 * ?0 -.3))
+    store := store - eaten + H
+    yieldModifier := ?0 * 5 + 1
+    immigrants :=
+      integer((yieldModifier * (20 * acres + store) / population / 100 + 1))
+    yieldModifier := integer(input / 20)
+    input := integer(10 * (2 * ?0 -.3))
 
-    if P > C then {
-      D := 0; return
+    if population > yieldModifier then {
+      deadTurn := 0; return
     } else {
-      D := P - C
-      if D > .45 * P then {
-        write("\nYou starved ",D," people in one year!")
+      deadTurn := population - yieldModifier
+      if deadTurn > .45 * population then {
+        write("\nYou starved ",deadTurn," people in one year!")
         finish("fink")
       } else {
-        P1 := ((Z - 1) * P1 + D * 100 / P) / Z
-        P := C
-        D1 +:= D
+        starvationPercentage := ((year - 1) * starvationPercentage +
+                                  deadTurn * 100 / population) / year
+        population := yieldModifier
+        deadTotal +:= deadTurn
         return
       }
     }
@@ -222,20 +225,20 @@ class Babylon(Z,D,D1,I,P,P1,A,Y,E,S,C,Q,L,H)
 
   method evaluate()
 
-    write("In your 10-year term of office, ",P1,
+    write("In your 10-year term of office, ",starvationPercentage,
           " percent of the population starved per year on _
-          average, i.e., a total of ",D1," people died!")
+          average, i.e., a total of ",deadTotal," people died!")
 
-    L := A / P
+    acresPerPerson := acres / population
 
     write("You started with 10 acres/person and ended with ",
-          L," acres/person.\n")
+          acresPerPerson," acres/person.\n")
 
-    if P1 > 33 | L < 7 then
+    if starvationPercentage > 33 | acresPerPerson < 7 then
       finish("fink")
-    else if P1 > 10 | L < 9 then
+    else if starvationPercentage > 10 | acresPerPerson < 9 then
       finish("nero")
-    else if P1 > 3 | L < 10 then
+    else if starvationPercentage > 3 | acresPerPerson < 10 then
       finish("notbad")
     else
       finish("fantastic")
@@ -274,7 +277,7 @@ class Babylon(Z,D,D1,I,P,P1,A,Y,E,S,C,Q,L,H)
       "not bad": {
         write("Your perforemance could have been somewhat _
                better, but really wasn't too bad at all. ",
-               integer(P * .8 * ?0), " people would dearly like _
+               integer(population * .8 * ?0), " people would dearly like _
                to see you assassinated but we all have _
                our trivial problems.")
       }
@@ -284,14 +287,14 @@ class Babylon(Z,D,D1,I,P,P1,A,Y,E,S,C,Q,L,H)
   end
 
   initially
-    Z := D := C := D1 := P1 := 0
-    P := 95
-    S := 2800
+    year := deadTurn := yieldModifier := deadTotal := starvationPercentage := 0
+    population := 95
+    store := 2800
     H := 3000
-    E := H - S
-    Y := 3
-    A := H / Y
-    I := 5
-    Q := 1
+    eaten := H - store
+    yield := 3
+    acres := H / yield
+    immigrants := 5
+    input := 1
 
 end
