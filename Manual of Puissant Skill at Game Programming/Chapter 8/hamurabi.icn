@@ -12,12 +12,8 @@ procedure main()
 
 end
 
-# Year, Dead, Total Dead, Immigrants, Population,
-# Starvation Percentage, Acres, Yield, Eaten,
-# Store, Random yearly yield modifier, Input,
-# Acres per person
 class Babylon(year,deadTurn,deadTotal,immigrants,population,starvationPercentage,
-              acres,yield,eaten,store,yieldModifier,input,acresPerPerson,H)
+              acres,yield,eaten,store,yieldModifier,input,acresPerPerson,hrvst)
 
   method play()
 
@@ -47,7 +43,7 @@ class Babylon(year,deadTurn,deadTotal,immigrants,population,starvationPercentage
     # Add immigrants to population
     population +:= immigrants
 
-    # Plague
+    # Check for plague
     if input <= 0 then {
       population /:= 2
       write("A horrible plague struck! Half the people died.")
@@ -81,6 +77,8 @@ class Babylon(year,deadTurn,deadTotal,immigrants,population,starvationPercentage
       if input < 0 then
         finish("quit")
       else if yield * input <= store then
+        # Variable input will be used in
+        # method sell() to finalize transaction
         return
       else {
         write("Hamurabi: think again. You have only ",store)
@@ -93,11 +91,12 @@ class Babylon(year,deadTurn,deadTotal,immigrants,population,starvationPercentage
 
   method sell()
 
+    # Sell acres if nothing was bought
     if input == 0 then {
 
       repeat {
 
-        writes("How many acres do you wish to sell?")
+        writes("How many acres do you wish to sell? ")
 
         input := integer(read())
 
@@ -112,7 +111,10 @@ class Babylon(year,deadTurn,deadTotal,immigrants,population,starvationPercentage
                 " acres. Now then,")
         }
       }
+
+    # Buy acres
     } else {
+      # Input is number of acres to buy
       acres +:= input ; store -:= yield * input; yieldModifier := 0
       write()
     }
@@ -124,7 +126,6 @@ class Babylon(year,deadTurn,deadTotal,immigrants,population,starvationPercentage
     repeat {
 
       writes("How many bushels shall we feed your people? ")
-
       input := integer(read())
 
       if input < 0 then
@@ -134,34 +135,41 @@ class Babylon(year,deadTurn,deadTotal,immigrants,population,starvationPercentage
         if input <= store then
           break
         else {
-
           write("Hamurabi: think again. You have only")
           write(store," bushels of grain. Now then,")
-
         }
+
       }
 
-      store -:= input
-      yieldModifier := 1
-      write()
-
     }
+
+    store -:= input
+    yieldModifier := 1
+    write()
 
   end
 
   method plant()
 
     repeat {
+
       writes("How many acres do you wish to plant? ")
+
+      # Do not overwrite input variable
+      # Use deadTurn instead...
       deadTurn := integer(read())
       if deadTurn == 0 then
         return
       else if deadTurn < 0 then
         finish("quit")
+
+      # Check number of acres
       else if deadTurn <= acres then {
 
+        # Check if there is enough grain (more than 0.5 bushel per acre)
         if (deadTurn / 2) < store then {
 
+          # Check if there is enough people (less than 10 acres per person)
           if (deadTurn < (10 * population)) then {
             store -:= deadTurn / 2
             return
@@ -189,26 +197,39 @@ class Babylon(year,deadTurn,deadTotal,immigrants,population,starvationPercentage
 
   method harvest()
 
-    yieldModifier := integer(?0 * 5 + 1)
-    yield := yieldModifier ; H := deadTurn * yield; eaten := 0
-    yieldModifier := integer(?0 * 5 + 1)
+    # Variable deadTurn is number of acres planted
+    yield := integer(randomModifier()) ; hrvst := deadTurn * yield; eaten := 0
 
     # Rats
+    yieldModifier := integer(randomModifier())
     if yieldModifier % 2 = 0 then {
       eaten := store / yieldModifier
     }
 
-    store := store - eaten + H
-    yieldModifier := ?0 * 5 + 1
+    # Subtract food eaten by rats and add harvest
+    store := store - eaten + hrvst
+
+    # Create immigrants
+    yieldModifier := randomModifier()
     immigrants :=
       integer((yieldModifier * (20 * acres + store) / population / 100 + 1))
+
+    # Variable input is amount of food given to people
+    # One person must eat 20 bushels so calculate 5% of this value
     yieldModifier := integer(input / 20)
+
+    # Store plague chance in input variable
+    # It will be used in method report()
     input := integer(10 * (2 * ?0 -.3))
 
-    if population > yieldModifier then {
+    # People have enough food and no one dies
+    if population < yieldModifier then {
       deadTurn := 0; return
     } else {
+
+      # People die without food
       deadTurn := population - yieldModifier
+
       if deadTurn > .45 * population then {
         write("\nYou starved ",deadTurn," people in one year!")
         finish("fink")
@@ -284,16 +305,22 @@ class Babylon(year,deadTurn,deadTotal,immigrants,population,starvationPercentage
 
     }
 
+    stop("So long for now.")
+
+  end
+
+  method randomModifier()
+    return ?0 * 5 + 1
   end
 
   initially
     year := deadTurn := yieldModifier := deadTotal := starvationPercentage := 0
     population := 95
     store := 2800
-    H := 3000
-    eaten := H - store
+    hrvst := 3000
+    eaten := hrvst - store
     yield := 3
-    acres := H / yield
+    acres := hrvst / yield
     immigrants := 5
     input := 1
 

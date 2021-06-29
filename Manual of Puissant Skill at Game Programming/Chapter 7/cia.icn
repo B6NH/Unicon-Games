@@ -1,14 +1,15 @@
 
 # CIA
 
-global verbs, directions, ca, vs, rooms,
-       ob, li, tt, maxtime, g, r, rs, n, ns
+global verbs, directions, objectsCarried, currentVerbAction, rooms,
+       objects, listOfEvidence, elapsedTime, maxtime, griminskiStatus,
+       currentRoom, readString, nounCode, nounString
 
 procedure main()
 
   init()
-  r := 1
-  write("\n",rooms[r].ds,"\n")
+  currentRoom := 1
+  write("\n",rooms[currentRoom].description,"\n")
 
   repeat {
 
@@ -24,58 +25,71 @@ procedure main()
 
 end
 
-record obj(as,ds,m,l,v,t)
+record obj(name,description,locationCode,l,evidencePoints,t)
 
-class room(ds,e)
+class room(description,helpMessage,e)
 
   initially(descrip,h,e1,e2,e3,e4)
-    ds := descrip
-    hs := h
+    description := descrip
+    helpMessage := h
     e := [e1,e2,e3,e4]
 
 end
 
 procedure input()
 
-  rs := "" ; tt +:= 3
+  readString := "" ; elapsedTime +:= 3
 
-  if tt > maxtime then
+  if elapsedTime > maxtime then
     stop("Sorry... You ran out of time")
 
+  # Get player input
   writes("\nNow what? ")
-  rs := read()
+  readString := read()
   write()
 
-  rs ? if vs := tab(find(" ")) then { =" "; ns := tab(0); return }
+  # Function succes for input with space
+  readString ? if currentVerbAction := tab(find(" ")) then {
+    # Save object name nounString
+    =" "; nounString := tab(0); return
+  }
 
 end
 
+# Parse input with multiple words
 procedure parsing()
 
-  if member(verbs,vs) then {
+  # Find verb
+  if member(verbs,currentVerbAction) then {
 
-    every n := 1 to *ob do {
-      if (ns == ob[n].as) & (ob[n].m = (r | 100)) then {
+    # Find object
+    every nounCode := 1 to *objects do {
+
+      # Check object name and location
+      if (nounString == objects[nounCode].name) &
+         (objects[nounCode].locationCode = (currentRoom | 100)) then {
         return
       }
+
     }
 
     write("It won't help")
 
   } else {
-    write("I don't know how to ",vs)
+    write("I don't know how to ",currentVerbAction)
   }
 
-  vs := ns := &null
+  # Unset variables
+  currentVerbAction := nounString := &null
 
 end
 
 procedure go()
   every j := 1 to 4 do {
-    if directions[j] == ns then {
-      if rooms[r].e[j] = 0 then { write("I can't go that direction"); return }
-      r := rooms[r].e[j]
-      write("\n",rooms[r].ds,"\n")
+    if directions[j] == nounString then {
+      if rooms[currentRoom].e[j] = 0 then { write("I can't go that direction"); return }
+      currentRoom := rooms[currentRoom].e[j]
+      write("\n",rooms[currentRoom].description,"\n")
       return
     }
   }
@@ -84,17 +98,17 @@ end
 procedure init()
 
   directions := [ "north", "east", "south", "west" ]
-  ca := []
-  li := []
-  tt := g := 0
+  objectsCarried := []
+  listOfEvidence := []
+  elapsedTime := griminskiStatus := 0
   maxtime := 1000
 
-  ob := [
+  objects := [
 
-    obj("north","it doesn't help",100,0,0,4),
-    obj("east","it doesn't help",100,0,0,4),
-    obj("south","it doesn't help",100,0,0,4),
-    obj("west","it doesn't help",100,0,0,4),
+    obj("north","it doesn't help", 100,0,0,4),
+    obj("east","it doesn't help", 100,0,0,4),
+    obj("south","it doesn't help", 100,0,0,4),
+    obj("west","it doesn't help", 100,0,0,4),
 
     obj("shelves","Shelves for weapons and tools line the wall next to your_
          desk.\nThere are numerous items which may help you on your _
@@ -112,7 +126,7 @@ procedure init()
     obj("door","The heavy door is painted black. A brass keyhole and _
          doorknob are here. You can see the circular holes on either side _
          of the door which must mean an electronic alarm beam.", 2,13,0,5),
-    obj("alarm","The alarm is screwed into place.",2,0,0,5),
+    obj("alarm","The alarm is screwed into place.", 2,0,0,5),
     obj("dog","The savage doberman leaps at you with bared fangs.\n _
          He will not let you past him.", 3,0,0,4),
     obj("table","The venetian front hall table has a tortoise shell letter\n_
@@ -131,9 +145,9 @@ procedure init()
          indentation of writing on it.", 5,0,0,1),
     obj("drawer", "This is a standard pull desk drawer.", 5,0,0,4),
     obj("pigeonhole", "The pigeonhole has a paid bill in it.",5,0,0,4),
-    obj("bill","The bill is from the telephone company.",5,0,0,1),
-    obj("phone","This is a beige pushbutton desk phone.",5,25,0,4),
-    obj("number","The telephone number is printed on the base",5,0,0,4),
+    obj("bill","The bill is from the telephone company.", 5,0,0,1),
+    obj("phone","This is a beige pushbutton desk phone.", 5,25,0,4),
+    obj("number","The telephone number is printed on the base", 5,0,0,4),
     obj("panel","The panels are tongue-in-groove. One of the panels _
          seems more worn than the others", 5,0,0,4),
     obj("shelves","There are software programs, manuals, and blank _
@@ -141,13 +155,13 @@ procedure init()
     obj("program","One program is for communicating with the U.S. _
          defense department's mainframe computer.", 6,0,10,5),
     obj("phone","This is a standard desk-type dial telephone. _
-         The receiver is set into a modem.",6,30,0,4),
-    obj("number","The telephone number is printed on the base",6,0,0,1),
+         The receiver is set into a modem.", 6,30,0,4),
+    obj("number","The telephone number is printed on the base", 6,0,0,1),
     obj("computer","this is a standard office computer with a keyboard.\n_
          A cd is inserted into one of the drives. The power switch is off.",
          6,0,0,5),
     obj("monitor","This is a high resolution LCD monitor. _
-         The power switch is off.",6,0,0,5),
+         The power switch is off.", 6,0,0,5),
     obj("modem","The modem is one that can use an automatic dialing\n_
          communications program. The power switch is off.", 6,0,0,5),
     obj("tray","the silver tray holds a decanter partially filled with _
@@ -155,16 +169,16 @@ procedure init()
     obj("decanter","the decanter is of etched crystal. it probably holds _
          some claret.", 7,0,0,1),
     obj("claret", "An amber liquid", 7,0,0,1),
-    obj("cabinet", "this is a fairly standard kitchen cabinet.",8,0,0,4),
-    obj("bottle","a bottle of capsules are here.",8,39,0,2),
+    obj("cabinet", "this is a fairly standard kitchen cabinet.", 8,0,0,4),
+    obj("bottle","a bottle of capsules are here.", 8,39,0,2),
     obj("capsule","the capsules are elongated and have a slight aroma _
          of burnt almonds.",8,0,0,1),
     obj("table","the bedside table has a phone on it. _
          a piece of paper and a lamp are here.", 9,0,0,3),
     obj("phone","there is a number printed on the phone.", 9,0,0,4),
-    obj("paper","a piece of monogrammed writing paper",9,43,0,1),
-    obj("combination","there is a combination written on it",9,0,0,4),
-    obj("safe","this is a standard combination safe.",9,0,0,4),
+    obj("paper","a piece of monogrammed writing paper", 9,43,0,1),
+    obj("combination","there is a combination written on it", 9,0,0,4),
+    obj("safe","this is a standard combination safe.", 9,0,0,4),
     obj("gum","a pack of stick-type peppermint gum. _
          each stick is wrapped in paper.", 9,0,0,2),
     obj("microfilm","the microfilm has been developed but you can't _
@@ -181,7 +195,7 @@ procedure init()
          10,52,0,2),
     obj("tank","there is a film developing tank and a film apron _
          and tank cover here too.", 10,0,0,2),
-    obj("headquarters","headquarters",100,0,0,4),
+    obj("headquarters","headquarters", 100,0,0,4),
     obj("capsules","the capsules are elongated and have a slight aroma _
          of burnt almonds.",8,0,0,1),
     obj("sideboard","a large ornate sideboard with a beveled glass mirror _
@@ -224,7 +238,7 @@ procedure init()
             "There is more here than meets the eye.", 7,0,3,0),
 
     room("You can see a microcomputer, monitor, and a cable modem \n_
-          on a table against the east wall of this over-sized closet. A phone is by_
+          on a table against the east wall of this over-sized closet. A phone is by _
           the computer. A chair and shelves are here.",
             "Running a program is always interesting.", 0,0,0,5),
 
@@ -258,7 +272,7 @@ end
 
 procedure command()
 
-  case rs of {
+  case readString of {
     "help": help()
     "quit": quit()
     "inventory": inventory()
@@ -266,16 +280,16 @@ procedure command()
     "time": printtime()
     "score": printscore()
     "restart": restart()
-    default: write("I can't understand ", rs)
+    default: write("I can't understand ", readString)
   }
 
 end
 
 procedure action()
 
-  if ob[n].t ~= 2 then {
+  if objects[nounCode].t ~= 2 then {
 
-    case vs of {
+    case currentVerbAction of {
       "look": verblook()
       "take"|"get": takeget()
       "go"|"crawl"|"walk": go()
@@ -296,69 +310,69 @@ procedure action()
       "unlock": unlock()
       "on": onoff("on")
       "off": onoff("off")
-      default: write("invalid verb ", v)
+      default: write("invalid verb ", currentVerbAction)
     }
 
   } else {
-    write("You can't ",vs," ",ns," yet.")
+    write("You can't ",currentVerbAction," ",nounString," yet.")
   }
 
 end
 
 procedure verblook()
-  write(ob[n].ds)
+  write(objects[nounCode].description)
   repeat {
-    if ob[n].l = 0 then {
+    if objects[nounCode].l = 0 then {
       return
     } else {
-      n := ob[n].l
-      if ob[n].m = r then
-        write(ob[n].ds)
+      nounCode := objects[nounCode].l
+      if objects[nounCode].locationCode = currentRoom then
+        write(objects[nounCode].description)
     }
   }
 end
 
 procedure takeget()
-  k := ob[n].t
+  k := objects[nounCode].t
   case k of {
     1: {
-      if *ca < 6 then
+      if *objectsCarried < 6 then
         takeit()
       else
         write("you can't carry anything else") }
-    2: { write("you can't take ", n, " yet"); return }
+    2: { write("you can't take ", nounCode, " yet"); return }
     3: { write("silly, that's too heavy to carry"); return }
     4: { write("that's ridiculous!"); return }
-    5: { write("you can't take ", n, " yet"); return }
+    5: { write("you can't take ", nounCode, " yet"); return }
     default: {
-      write("invalid take code for object ", ob[n].as,ob[n].t)
+      write("invalid take code for object ", objects[nounCode].name,objects[nounCode].t)
       return
     }
   }
 end
 
 procedure takeit()
-  if ob[n].m = 100 then {
+  if objects[nounCode].locationCode = 100 then {
     write("you already have it")
     return
   } else {
     write("taken.")
-    ob[n].m := 100
-    put(ca, n)
+    objects[nounCode].locationCode := 100
+    put(objectsCarried, nounCode)
   }
 end
 
 procedure verbopen()
 
-  case ns of {
+  case nounString of {
 
     "door": {
-      if ob[12].t = 4 & ob[13].t = 4 then {
+      if objects[12].t = 4 & objects[13].t = 4 then {
         write("opened")
         rooms[2].e[1] := 3
-      } else if ob[12].t = 5 then {
+      } else if objects[12].t = 5 then {
         write("the door is locked.")
-      } else if ob[13].t = 5 then {
+      } else if objects[13].t = 5 then {
         stop("You didn't disconnect the alarm. It goes off and the\n",
              "police come and arrest you. Game over.")
       } else {
@@ -371,7 +385,7 @@ procedure verbopen()
       cs := read()
       if cs == "2-4-8" then {
         write("opened")
-        ob[18].ds ||:="parts of an rr-13 rifle are inside the padded case."
+        objects[18].description ||:="parts of an rr-13 rifle are inside the padded case."
       } else {
         write("sorry you don't have the right combination")
       }
@@ -382,9 +396,9 @@ procedure verbopen()
       cs := read()
       if cs == "20-15-9" then {
         write("opened")
-        ob[44].l := 45
-        ob[45].t := 1
-        ob[44].ds ||:= "   inside is"
+        objects[44].l := 45
+        objects[45].t := 1
+        objects[44].description ||:= "   inside is"
       } else {
         write("sorry you don't have the right combination")
       }
@@ -392,14 +406,14 @@ procedure verbopen()
 
     "cabinet": {
       write("opened")
-      if n = 49 then {
-        ob[51].t := 1
-        ob[49].l := 51
-        rooms[10].ds ||:= " open"
+      if nounCode = 49 then {
+        objects[51].t := 1
+        objects[49].l := 51
+        rooms[10].description ||:= " open"
       } else {
-        ob[38].t := 1
-        ob[37].l := 38
-        rooms[8].ds ||:= " open"
+        objects[38].t := 1
+        objects[37].l := 38
+        rooms[8].description ||:= " open"
       }
     }
 
@@ -411,12 +425,12 @@ procedure verbopen()
 
     "drawer": {
       write("opened")
-      ob[21].l := 57
-      ob[57].t := 1
+      objects[21].l := 57
+      objects[57].t := 1
     }
 
     default: {
-      write("A ", ns, " can't be opened.")
+      write("A ", nounString, " can't be opened.")
     }
 
   }
@@ -425,9 +439,9 @@ end
 
 procedure verbread()
 
-  case n of {
+  case nounCode of {
 
-    (r = 3) & 16: {
+    (currentRoom = 3) & 16: {
       write("The telephone bill is made out to 322-9678 -V.Grim, P.O. X\n",
       "Grand Central Station, NYC\n", "The amount is $247.36 _
       for long distance charges to Washington DC")
@@ -460,34 +474,34 @@ procedure verbread()
 end
 
 procedure drop()
-  every i := 1 to *ca do {
-    if n = ca[i] then {
-      ob[ca[i]].m := r
-      delete(ca, i)
+  every i := 1 to *objectsCarried do {
+    if nounCode = objectsCarried[i] then {
+      objects[objectsCarried[i]].locationCode := currentRoom
+      delete(objectsCarried, i)
       write("dropped")
       return
     }
   }
-  write("You aren't carrying a ", ns)
+  write("You aren't carrying a ", nounString)
 end
 
 procedure call()
 
-  if n = 53 & (r = (5 | 6 | 9)) then {
+  if nounCode = 53 & (currentRoom = (5 | 6 | 9)) then {
 
     write("Ring...ring")
     write("Hello, agent.  This is your control speaking.")
     write("List your tangible evidence.")
     ll := 0
-    li := []
+    listOfEvidence := []
 
     if get_evidence() >= 40 then {
 
       write("Fantastic job!!")
       write("We'll be over in a flash to arrest the suspect!")
-      tt +:= 6
+      elapsedTime +:= 6
 
-      if tt > maxtime then {
+      if elapsedTime > maxtime then {
         stop("sorry... you ran out of time")
       } else {
         write(" -----------------")
@@ -495,14 +509,14 @@ procedure call()
               "operatives waiting to arrest him.")
         write(" -----------------")
         write("You are handsomely rewarded for your clever sleuthing.")
-        write("You solved the mystery in ", tt, " minutes")
+        write("You solved the mystery in ", elapsedTime, " minutes")
         exit()
       }
 
     }
 
-  } else if n ~= 53 then {
-    write("It's no use to call ", ns)
+  } else if nounCode ~= 53 then {
+    write("It's no use to call ", nounString)
   } else {
     write("You are not near a phone")
   }
@@ -514,98 +528,98 @@ procedure get_evidence()
   local ev := 0
   repeat {
 
-    rs := read()
+    readString := read()
 
-    if rs == "" then {
+    if readString == "" then {
       return ev
     } else {
 
-      every i := 1 to *ca do {
-        if rs == ob[ca[i]].as then {
-          if !li = ca[i] then {
-            write("You already said ", rs)
+      every i := 1 to *objectsCarried do {
+        if readString == objects[objectsCarried[i]].name then {
+          if !listOfEvidence = objectsCarried[i] then {
+            write("You already said ", readString)
             break next
           }
-          ev +:=ob[ca[i]].v
-          put(li, ca[i])
+          ev +:=objects[objectsCarried[i]].evidencePoints
+          put(listOfEvidence, objectsCarried[i])
           break next
         }
       }
 
     }
-    write("You're not carrying a ", rs)
+    write("You're not carrying a ", readString)
   }
 
 end
 
 procedure unscrew()
-  if n = 13 then {
-    if ob[!ca].as=="screwdriver" then {
+  if nounCode = 13 then {
+    if objects[!objectsCarried].name=="screwdriver" then {
       write("The alarm system is off.")
-      ob[13].t := 4
-      ob[13].ds := "The alarm system is disabled."
+      objects[13].t := 4
+      objects[13].description := "The alarm system is disabled."
       return
     }
     write("You have nothing to unscrew with")
   } else {
-    write("You can't unscrew a ", ns)
+    write("You can't unscrew a ", nounString)
   }
 end
 
 
 procedure spray()
-  if n = (13|10) then {
-    if !ca = 10 then {
+  if nounCode = (13|10) then {
+    if objectsCarried[i := 1 to *objectsCarried] = 10 then {
       write("The dog is drugged and falls harmlessly at your feet.")
       rooms[3].e[1] := 5
       rooms[3].e[2] := 9
       rooms[3].e[4] := 4
-      rooms[3].ds[-31:0] := " The drugged dog is on the floor."
-      ob[14].ds := "The fierce doberman is drugged on the floor."
-      delete(ca, i)
+      rooms[3].description[-31:0] := " The drugged dog is on the floor."
+      objects[14].description := "The fierce doberman is drugged on the floor."
+      delete(objectsCarried, i)
       write("The drug is used up and is no longer in your inventory.")
       return
     } else {
       write("you have nothing to spray with")
     }
   } else {
-    write("you can't spray a ", ns)
+    write("you can't spray a ", nounString)
   }
 end
 
 procedure verbpush()
-  if n = 26 then {
+  if nounCode = 26 then {
     write("The panel pops open to reveal the presence of a \n",
           "previously hidden room.")
     rooms[5].e[2] := 6
-    ob[26].ds ||:= "A hidden room can be seen behind one panel."
+    objects[26].description ||:= "A hidden room can be seen behind one panel."
   } else {
-    write("It doesn't do any good to push a ", ns)
+    write("It doesn't do any good to push a ", nounString)
   }
 end
 
 procedure verbload()
-  if n = 28 then {
-    if ob[28].m = 6 then {
+  if nounCode = 28 then {
+    if objects[28].locationCode = 6 then {
       write("The program is already loaded.")
     } else {
       write("That won't help you.")
     }
   } else {
-    write("can't load a ", ns)
+    write("can't load a ", nounString)
   }
 end
 
 procedure verbrun()
 
-   if n = 28 then {
+   if nounCode = 28 then {
 
-    if ob[31 | 32 | 33].t = 5 then {
+    if objects[31 | 32 | 33].t = 5 then {
       write("The computer can't run the program yet.")
       return
     }
 
-    ob[28].t := 1
+    objects[28].t := 1
     write("The program dials a Washington D.C. number.\n",
           "A message appears on the monitor.\n")
     writes("PLEASE LOG IN: ")
@@ -619,9 +633,9 @@ procedure verbrun()
       write("ALL INFORMATION ON THIS SYSTEM")
       write("IS CLASSIFIED TOP SECRET.")
 
-    } else if g = 0 then {
+    } else if griminskiStatus = 0 then {
 
-      g := 2
+      griminskiStatus := 2
       write("\n\nINVALID LOGON CODE\n\n")
       write("The screen goes blank. You hear footsteps.\n",
             "Griminski looms in the doorway with an 8mm Luger in hand.")
@@ -630,7 +644,7 @@ procedure verbrun()
 
       if b~= 0 then {
         parsing()
-        if vs == "shoot" & (n=(8 | 58)) then {
+        if currentVerbAction == "shoot" & (nounCode=(8 | 58)) then {
           if shoot(1) === "return" then {
             return
           }
@@ -645,43 +659,43 @@ procedure verbrun()
     }
 
   } else {
-    write("you can't run a ", ns)
+    write("you can't run a ", nounString)
   }
 
 end
 
 procedure drink()
-  if n = 36 then {
+  if nounCode = 36 then {
     write("You are poisoned.")
     stop("You stagger to the phone and call the ambulance. Game over.")
   } else {
-    write("You can't drink ", ns)
+    write("You can't drink ", nounString)
   }
 end
 
 procedure cheweat()
-  if n = (39 | 54) then {
+  if nounCode = (39 | 54) then {
     write("You fool! These are cyanide capsules.")
     stop("You fall to the floor and die in agony.  Game over.")
-  } else if n = 45 then {
+  } else if nounCode = 45 then {
     write("You idiot! The gum is a plastic explosive.")
     stop("You have just blown yourself to smithereens. Game over.")
   } else {
-    write("You can't ", vs, " ", ns)
+    write("You can't ", currentVerbAction, " ", nounString)
   }
 end
 
 procedure unwrap()
-  if n = 45 then {
+  if nounCode = 45 then {
     write("The wrapper conceals a tiny strip of microfilm.")
-    ob[46].t := 1
+    objects[46].t := 1
   } else {
-    write("It doesn't help to unwrap ", ns)
+    write("It doesn't help to unwrap ", nounString)
   }
 end
 
 procedure talk()
-  if n = 14 then {
+  if nounCode = 14 then {
     write("He doesn't speak English.")
   } else {
     write("That won't help you.")
@@ -690,31 +704,31 @@ end
 
 procedure shoot(x)
 
-  if \x | (n=(8 | 14 | 58)) then {
+  if \x | (nounCode=(8 | 14 | 58)) then {
 
-    every i := 1 to *ca do {
+    every i := 1 to *objectsCarried do {
 
-      if ca[i] = 8 then {
-        if r = 3 & n = (8 | 14) then {
+      if objectsCarried[i] = 8 then {
+        if currentRoom = 3 & nounCode = (8 | 14) then {
           write("The dog bites your hand.")
           return
-        } else if r ~= 6 then {
+        } else if currentRoom ~= 6 then {
           write("That just makes a big mess.")
           return
-        } else if g ~= 2 then {
+        } else if griminskiStatus ~= 2 then {
           write("That won't help.")
           return
         } else {
           write("Your shot grazes his forehead. He crashes to the floor")
           write("You have time to gather more evidence to apprehend him.")
-          g := 1
-          rooms[6].ds ||:=" Griminski is lying unconscious on the floor."
+          griminskiStatus := 1
+          rooms[6].description ||:=" Griminski is lying unconscious on the floor."
         }
       }
 
     }
 
-    if (r = 6) & (g = 2) then {
+    if (currentRoom = 6) & (griminskiStatus = 2) then {
       write("You don't have the pistol. Anything else is too slow.")
     } else {
       write("You have nothing to shoot with.")
@@ -728,50 +742,50 @@ procedure shoot(x)
 end
 
 procedure unlock()
-  if n = 12 then {
-    if ob[!ca].as == "key" then {
+  if nounCode = 12 then {
+    if objects[!objectsCarried].name == "key" then {
       write("Unlocked.")
-      ob[12].t := 4
+      objects[12].t := 4
       return
     } else {
       write("You have nothing to use to unlock.")
     }
   } else {
-    write("You can't ", vs, " a ", ns)
+    write("You can't ", currentVerbAction, " a ", nounString)
   }
 end
 
 procedure onoff(o)
 
-  case n of {
-    31: m := 137
-    32: m := 57
-    33: m := 111
-    default: { write("You can't turn ", o, " a ", ns); fail }
+  case nounCode of {
+    31: locationCode := 137
+    32: locationCode := 57
+    33: locationCode := 111
+    default: { write("You can't turn ", o, " a ", nounString); fail }
   }
 
-  if ob[n].ds[-3:0] == ("off"|" on") then {
-    while ob[n].ds[-1] ~== "o" do { ob[n].ds[-1] := "" }
-    ob[n].ds[-1] := ""
+  if objects[nounCode].description[-3:0] == ("off"|" on") then {
+    while objects[nounCode].description[-1] ~== "o" do { objects[nounCode].description[-1] := "" }
+    objects[nounCode].description[-1] := ""
   }
 
-  ob[n].ds ||:= " " || o
+  objects[nounCode].description ||:= " " || o
   write(o, ".")
 
-  ob[n].t := if o == "on" then 3 else 5
+  objects[nounCode].t := if o == "on" then 3 else 5
 
 end
 
 procedure help()
-  write(rooms[r].hs)
+  write(rooms[currentRoom].helpMessage)
 end
 
 procedure quit()
 
   write("Are you sure you want to quit? (yes/no)")
-  rs := read()
+  readString := read()
 
-  if rs == "no" then
+  if readString == "no" then
     return
   else {
     printtime()
@@ -783,27 +797,27 @@ end
 
 procedure inventory()
 
-  if *ca = 0 then {
+  if *objectsCarried = 0 then {
     write("You aren't carrying anything")
     return
   } else {
     write("You have")
-    every write(ob[!ca].as)
+    every write(objects[!objectsCarried].name)
   }
 
 end
 
 procedure look()
-  write(rooms[r].ds)
+  write(rooms[currentRoom].description)
 end
 
 procedure printtime()
-  write("Elapsed time is ",tt," minutes.")
+  write("Elapsed time is ",elapsedTime," minutes.")
 end
 
 procedure printscore()
   s := 0
-  every s +:= ob[!ca].v
+  every s +:= objects[!objectsCarried].evidencePoints
   write("You have ",s," points for evidence.")
 end
 
