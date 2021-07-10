@@ -601,6 +601,10 @@ class CheckersGameState : GameState(square,mydepth,human)
 
   method computermove()
 
+    static lookAheadTime
+    local list_of_possible, t1, t2, possible, mv, thepoints, bestpoints
+    initial { lookAheadTime := 1000 }
+
     list_of_possible := []
     t1 := &time
 
@@ -632,8 +636,8 @@ class CheckersGameState : GameState(square,mydepth,human)
      t2 := &time
 
      # Go deeper if enough time left
-     if t2-t1 < 1000 then {
-       delay(1000-(t2-t1))
+     if t2-t1 < lookAheadTime then {
+       delay(lookAheadTime-(t2-t1))
        mydepth +:= 1
      } else {
        mydepth -:= 1

@@ -5,6 +5,18 @@ global verbs, directions, objectsCarried, currentVerbAction, rooms,
        objects, listOfEvidence, elapsedTime, maxtime, griminskiStatus,
        currentRoom, readString, nounCode, nounString
 
+
+# Main Commands:
+
+# look - look at current location
+# look X - look at object X
+# take X - take object X
+# go X - go in direction X
+# drop X - drop object X (can be taken again in the same location)
+# inventory - show carried objects
+# score - show current score
+# time - show elapsed time
+
 procedure main()
 
   init()
@@ -385,9 +397,9 @@ procedure verbopen()
       cs := read()
       if cs == "2-4-8" then {
         write("opened")
-        objects[18].description ||:="parts of an rr-13 rifle are inside the padded case."
+        objects[18].description ||:=" Parts of an rr-13 rifle are inside the padded case."
       } else {
-        write("sorry you don't have the right combination")
+        write("Sorry you don't have the right combination")
       }
     }
 
@@ -454,7 +466,7 @@ procedure verbread()
     }
 
     23: {
-      write("The bill is made out to 322-8721, Dr. Vladimir Griminski",
+      write("The bill is made out to 322-8721, Dr. Vladimir Griminski ",
             "14 Parkside Avenue - NYC.\n",
             "The bill is for $68.34 for mostly local calls.")
     }
@@ -830,3 +842,100 @@ procedure restart()
     write("Since you don't want to restart... ")
   }
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Hints
+
+# Evidence: letter, microfilm, camera, program
+# Dangerous objects: alarm, dog, umbrella, capsule, claret, gum
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Solution
+
+# 1. Take screwdriver, key, drug and go north.
+# 2. Unscrew alarm. Unlock and open door. Go north.
+# 3. Spray drug to defeat dog. Read and take letter from tray. (+10)
+# 4. Go west and take briefcase. Don't open umbrella.
+# 5. Go east 2 times. Read combination from piece of paper and open safe.
+# 6. Unwrap gum and take microfilm. (+10)
+# 7. Go north. Take camera from shelves. (+10)
+# 8. Go south, west, north. Read notepad from desk to find computer password.
+# 9. Open briefcase using code from desk drawer.
+# 10. Two rooms to the north have death only, but you can visit them if you want.
+# 11. Push panel in drawing room and go east to hidden room.
+# 12. Turn on modem, computer and monitor. Run program and log in with password from notepad.
+# 13. If you have no space in your inventory, drop one of the unnecessary items.
+# 14. Take program and call headquarters. List all evidence and finish game. (+10)
+
