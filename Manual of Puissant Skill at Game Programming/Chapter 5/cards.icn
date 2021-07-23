@@ -5,6 +5,8 @@ link random
 link drawcard
 procedure main()
 
+  local limit, delayTime, deck, Player1, Player2
+
   &window := open("War","g")
   limit := 20
   delayTime := 500
@@ -70,10 +72,7 @@ procedure main()
 
   line()
 
-  if *Player1 = limit then
-    write("Player2 wins")
-  else
-    write("Player1 wins")
+  write("Winner: Player", if *Player1 = limit then 2 else 1)
 
 end
 

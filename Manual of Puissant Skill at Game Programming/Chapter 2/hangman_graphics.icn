@@ -7,7 +7,7 @@ procedure main()
 
   w := open("hangman","g","size=400,400")
 
-  word := ?["beagle","tiger"]
+  word := ?["beagle","chocolate","helicopter","investigation","powder","tiger"]
   blanks := repl("-",*word)
   misses := 0
   chances := 7
@@ -29,6 +29,7 @@ procedure main()
     write(blanks)
     letter := read()
 
+    # Reveal guessed letters
     if find(letter,word) then
       every i := find(letter,word) do
         blanks[i] := word[i]

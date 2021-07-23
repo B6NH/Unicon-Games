@@ -18,17 +18,24 @@ procedure main()
   ]
 
   repeat {
+
     every write(image[1 to misses])
+
     if misses = 5 then stop("You lose! ",getStr(word))
+
     write(blanks)
+
     letter := read()
+
     if find(letter,word) then
       every i := find(letter,word) do
         blanks[i] := word[i]
     else
       misses +:= 1
+
     if not find("-",blanks) then
       stop("You win! ",getStr(word))
+
   }
 
 end
