@@ -1,4 +1,4 @@
-# Unicon-Games
+# ![Logo](https://i.imgur.com/xudOVuH.png)
 
 Games from book "Manual of Puissant Skill at Game Programming" by Clinton Jeffery
 
